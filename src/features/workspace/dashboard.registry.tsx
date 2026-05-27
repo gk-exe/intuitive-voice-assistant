@@ -11,6 +11,8 @@
  * the design system.
  */
 
+import type * as React from "react";
+
 import {
   getCategory,
   type CategoryId,
@@ -47,7 +49,7 @@ function GenericCard({ id }: CardProps) {
  * Registry — key is the renderer string from CategoryDefinition.dashboard.renderer.
  * Today all three renderers share GenericCard; later phases swap in real ones.
  */
-const RENDERERS: Record<string, (props: CardProps) => JSX.Element | null> = {
+const RENDERERS: Record<string, (props: CardProps) => React.ReactElement | null> = {
   summary: GenericCard,
   list: GenericCard,
   reminder: GenericCard,
