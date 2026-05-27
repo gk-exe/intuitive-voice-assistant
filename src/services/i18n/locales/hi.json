@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "Voice",
+    "tagline": "बस बोलिए। बाक़ी हम सँभालते हैं।"
+  },
+  "common": {
+    "continue": "जारी रखें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएँ",
+    "back": "वापस",
+    "loading": "लोड हो रहा है…",
+    "language": "भाषा"
+  },
+  "auth": {
+    "welcomeTitle": "स्वागत है",
+    "welcomeSubtitle": "रोज़मर्रा की ज़िंदगी के लिए आपका शांत सहायक। बस बोलिए।",
+    "getStarted": "शुरू करें",
+    "haveAccount": "मेरा खाता पहले से है",
+    "loginTitle": "वापसी पर स्वागत है",
+    "loginSubtitle": "जारी रखने के लिए साइन इन करें",
+    "signupTitle": "अपना स्थान बनाएँ",
+    "signupSubtitle": "एक मिनट से भी कम में",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "name": "आपका नाम",
+    "signIn": "साइन इन",
+    "signUp": "साइन अप",
+    "noAccount": "खाता नहीं है?",
+    "yesAccount": "पहले से खाता है?"
+  },
+  "home": {
+    "greeting": "नमस्ते",
+    "prompt": "टैप करें और बोलें। मैं सब व्यवस्थित कर दूँगा।",
+    "micHint": "बात करने के लिए टैप करें",
+    "sections": {
+      "today": "आज",
+      "pending": "बाक़ी",
+      "groceries": "किराना"
+    },
+    "empty": "अभी कुछ नहीं। कुछ बोलकर देखिए।"
+  },
+  "languages": {
+    "en": "English",
+    "ml": "മലയാളം",
+    "hi": "हिन्दी"
+  }
+}
