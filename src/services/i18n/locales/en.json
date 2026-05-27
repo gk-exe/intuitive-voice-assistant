@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "Voice",
+    "tagline": "Talk naturally. Stay organized."
+  },
+  "common": {
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "loading": "Loading…",
+    "language": "Language"
+  },
+  "auth": {
+    "welcomeTitle": "Welcome",
+    "welcomeSubtitle": "Your calm assistant for everyday life. Just speak.",
+    "getStarted": "Get started",
+    "haveAccount": "I already have an account",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to continue",
+    "signupTitle": "Create your space",
+    "signupSubtitle": "Takes less than a minute",
+    "email": "Email",
+    "password": "Password",
+    "name": "Your name",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "noAccount": "Don't have an account?",
+    "yesAccount": "Already have an account?"
+  },
+  "home": {
+    "greeting": "Hello",
+    "prompt": "Tap and speak. I'll organize it for you.",
+    "micHint": "Tap to talk",
+    "sections": {
+      "today": "Today",
+      "pending": "Pending",
+      "groceries": "Groceries"
+    },
+    "empty": "Nothing yet. Try saying something."
+  },
+  "languages": {
+    "en": "English",
+    "ml": "മലയാളം",
+    "hi": "हिन्दी"
+  }
+}
