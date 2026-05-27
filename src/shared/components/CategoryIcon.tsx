@@ -7,16 +7,15 @@
  */
 
 import * as Lucide from "lucide-react";
+import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
-
-type LucideIcon = (props: LucideProps) => JSX.Element;
 
 interface Props extends LucideProps {
   name: string;
 }
 
 export function CategoryIcon({ name, ...rest }: Props) {
-  const Icon = (Lucide as unknown as Record<string, LucideIcon>)[name] ??
-    (Lucide as unknown as Record<string, LucideIcon>).Circle;
+  const registry = Lucide as unknown as Record<string, ComponentType<LucideProps>>;
+  const Icon = registry[name] ?? registry.Circle;
   return <Icon {...rest} />;
 }
