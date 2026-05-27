@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { LanguageSwitcher } from "@/features/settings/components/LanguageSwitcher";
+import { useWorkspaceStore } from "@/store/workspace.store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,6 +23,15 @@ export const Route = createFileRoute("/")({
 
 function WelcomePage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const onboardingComplete = useWorkspaceStore((s) => s.onboardingComplete);
+
+  // If the user has already finished onboarding, send them home.
+  useEffect(() => {
+    if (onboardingComplete) {
+      void navigate({ to: "/home", replace: true });
+    }
+  }, [onboardingComplete, navigate]);
 
   return (
     <Screen>
@@ -41,7 +52,7 @@ function WelcomePage() {
       </main>
 
       <footer className="safe-bottom flex flex-col gap-3 pb-6">
-        <Link to="/signup" className="contents">
+        <Link to="/onboarding" className="contents">
           <TouchButton fullWidth>{t("auth.getStarted")}</TouchButton>
         </Link>
         <Link to="/login" className="contents">

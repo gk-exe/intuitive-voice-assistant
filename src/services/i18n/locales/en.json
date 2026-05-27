@@ -9,6 +9,8 @@
     "save": "Save",
     "delete": "Delete",
     "back": "Back",
+    "edit": "Edit",
+    "done": "Done",
     "loading": "Loading…",
     "language": "Language"
   },
@@ -33,12 +35,51 @@
     "greeting": "Hello",
     "prompt": "Tap and speak. I'll organize it for you.",
     "micHint": "Tap to talk",
+    "addModule": "Add another area",
+    "workspaceEmpty": "Your workspace is empty. Add an area to get started.",
     "sections": {
       "today": "Today",
       "pending": "Pending",
-      "groceries": "Groceries"
+      "groceries": "Groceries",
+      "workspace": "Your spaces"
     },
     "empty": "Nothing yet. Try saying something."
+  },
+  "onboarding": {
+    "finish": "Set up my space",
+    "nothingPicked": "No areas chosen yet. Pick at least one to continue.",
+    "willEnable_one": "I'll set up {{count}} area for you.",
+    "willEnable_other": "I'll set up {{count}} areas for you.",
+    "willEnable": "I'll set up {{count}} areas for you.",
+    "steps": {
+      "describe": {
+        "prompt": "Tell me a little about your life. What would you like help managing?",
+        "placeholder": "For example, rent, groceries, my small business…",
+        "example1": "I manage rental properties and bills.",
+        "example2": "I want help remembering groceries and payments.",
+        "example3": "I run a small business and handle clients."
+      },
+      "pick": {
+        "prompt": "Pick the areas you'd like on your home screen. You can change this anytime."
+      },
+      "confirm": {
+        "prompt": "Looks good?"
+      }
+    }
+  },
+  "categories": {
+    "finance": "Finance",
+    "groceries": "Groceries",
+    "rent": "Rent",
+    "property-sale": "Property Sale",
+    "bills": "Bills",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "client-management": "Clients",
+    "small-business": "Business",
+    "study": "Study",
+    "health": "Health",
+    "family": "Family"
   },
   "languages": {
     "en": "English",

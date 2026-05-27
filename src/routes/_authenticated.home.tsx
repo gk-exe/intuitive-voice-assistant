@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Screen } from "@/shared/components/Screen";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { LanguageSwitcher } from "@/features/settings/components/LanguageSwitcher";
+import { Workspace } from "@/features/workspace/components/Workspace";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
@@ -31,21 +32,18 @@ function HomePage() {
         <LanguageSwitcher />
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center gap-10 py-10">
-        <p className="max-w-xs text-center text-lg text-muted-foreground">
-          {t("home.prompt")}
-        </p>
-        <MicButton label={t("home.micHint")} />
+      <main className="flex flex-col gap-10 py-8">
+        <div className="flex flex-col items-center gap-4 py-4">
+          <MicButton label={t("home.micHint")} />
+          <p className="max-w-xs text-center text-sm text-muted-foreground">
+            {t("home.prompt")}
+          </p>
+        </div>
+
+        <Workspace />
       </main>
 
-      <section className="safe-bottom flex flex-col gap-3 pb-6">
-        <div className="rounded-3xl bg-surface p-5 shadow-soft">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            {t("home.sections.today")}
-          </h2>
-          <p className="mt-2 text-foreground/80">{t("home.empty")}</p>
-        </div>
-      </section>
+      <div className="safe-bottom pb-6" />
     </Screen>
   );
 }
