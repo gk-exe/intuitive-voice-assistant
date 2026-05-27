@@ -69,9 +69,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "A calm voice-first assistant that listens, understands, and organizes your day.",
       },
-      { property: "og:title", content: "Voice" },
-      { property: "og:description", content: "Talk naturally. Stay organized." },
+      { property: "og:title", content: "Voice — Talk naturally. Stay organized." },
+      { property: "og:description", content: "An intuitive voice assistant that personalizes user experiences through conversational onboarding and dynamic workspace generation." },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Voice — Talk naturally. Stay organized." },
+      { name: "description", content: "An intuitive voice assistant that personalizes user experiences through conversational onboarding and dynamic workspace generation." },
+      { name: "twitter:description", content: "An intuitive voice assistant that personalizes user experiences through conversational onboarding and dynamic workspace generation." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9b4d27a4-7b99-4ce5-8bb2-564ecf62d835/id-preview-a9005c86--a46f9338-97ce-4db7-a35e-2111c7be3006.lovable.app-1779879053616.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9b4d27a4-7b99-4ce5-8bb2-564ecf62d835/id-preview-a9005c86--a46f9338-97ce-4db7-a35e-2111c7be3006.lovable.app-1779879053616.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
