@@ -94,7 +94,7 @@ function OnboardingPage() {
   const finish = () => {
     setModules(Array.from(picked));
     completeOnboarding();
-    void navigate({ to: "/_authenticated/home" as never });
+    void navigate({ to: "/home" });
   };
 
   const canAdvance = useMemo(() => {

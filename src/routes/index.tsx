@@ -29,7 +29,7 @@ function WelcomePage() {
   // If the user has already finished onboarding, send them home.
   useEffect(() => {
     if (onboardingComplete) {
-      void navigate({ to: "/_authenticated/home" as never, replace: true });
+      void navigate({ to: "/home", replace: true });
     }
   }, [onboardingComplete, navigate]);
 
@@ -52,7 +52,7 @@ function WelcomePage() {
       </main>
 
       <footer className="safe-bottom flex flex-col gap-3 pb-6">
-        <Link to={"/onboarding" as never} className="contents">
+        <Link to="/onboarding" className="contents">
           <TouchButton fullWidth>{t("auth.getStarted")}</TouchButton>
         </Link>
         <Link to="/login" className="contents">
