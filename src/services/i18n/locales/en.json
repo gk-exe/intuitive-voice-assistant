@@ -48,12 +48,18 @@
   "workspace": {
     "moveUp": "Move up",
     "moveDown": "Move down",
+    "openModule": "Open {{name}}",
     "defaultEmpty": "Nothing here yet — tap the mic anytime.",
+    "summary": {
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items"
+    },
     "empty": {
       "title": "Your space is a fresh page.",
       "body": "Pick an area to start with. You can change it anytime."
     }
   },
+
   "onboarding": {
     "finish": "Set up my space",
     "nothingPicked": "No areas chosen yet. Pick at least one to continue.",
@@ -183,9 +189,151 @@
       }
     }
   },
+  "records": {
+    "actions": { "edit": "Edit" },
+    "form": {
+      "subtitle": "Add only what you know. Edit anytime.",
+      "required": "Please fill in",
+      "choose": "Choose…"
+    },
+    "empty": {
+      "group": "Nothing here.",
+      "body": "Add your first one. You can edit or remove it anytime."
+    },
+    "summary": { "total": "Total", "value": "Value" },
+    "detail": {
+      "details": "Details",
+      "reminder": "Reminder",
+      "noDetails": "No extra details yet.",
+      "noReminder": "No reminder set yet. We'll surface this when reminders launch.",
+      "confirmDelete": "Delete this?"
+    },
+    "unknownModule": "That space doesn't exist.",
+    "notFound": "We couldn't find that.",
+    "fields": {
+      "personName": "Name",
+      "dueDate": "Due date",
+      "phone": "Phone",
+      "notes": "Notes",
+      "recurring": "Repeats"
+    },
+    "recurrence": {
+      "none": "Doesn't repeat",
+      "weekly": "Every week",
+      "monthly": "Every month",
+      "yearly": "Every year"
+    },
+    "finance": {
+      "plural": "Finance entries",
+      "singular": "Entry",
+      "add": "Add entry",
+      "empty": "No finance entries yet.",
+      "fields": { "amountPending": "Amount pending", "amountPaid": "Amount paid" },
+      "status": { "pending": "Pending", "partial": "Partly paid", "paid": "Paid" }
+    },
+    "groceries": {
+      "plural": "Groceries",
+      "singular": "Item",
+      "add": "Add item",
+      "empty": "Your grocery list is empty.",
+      "fields": { "name": "Item", "quantity": "Quantity", "category": "Category" },
+      "category": {
+        "produce": "Produce", "dairy": "Dairy", "pantry": "Pantry",
+        "household": "Household", "other": "Other"
+      },
+      "status": { "toBuy": "To buy", "bought": "Bought" }
+    },
+    "rent": {
+      "plural": "Properties",
+      "singular": "Property",
+      "add": "Add property",
+      "empty": "No properties added yet.",
+      "fields": {
+        "propertyName": "Property",
+        "tenantName": "Tenant",
+        "rentAmount": "Rent amount",
+        "dueDate": "Rent due"
+      },
+      "status": { "active": "Active", "vacant": "Vacant", "closed": "Closed" }
+    },
+    "property-sale": {
+      "plural": "Listings",
+      "singular": "Listing",
+      "add": "Add listing",
+      "empty": "No listings yet.",
+      "fields": { "title": "Title", "price": "Price", "buyerName": "Buyer" },
+      "status": { "listed": "Listed", "inTalks": "In talks", "closed": "Closed" }
+    },
+    "bills": {
+      "plural": "Bills",
+      "singular": "Bill",
+      "add": "Add bill",
+      "empty": "No bills tracked yet.",
+      "fields": { "label": "Bill", "amount": "Amount" },
+      "status": { "due": "Due", "paid": "Paid", "overdue": "Overdue" }
+    },
+    "tasks": {
+      "plural": "Tasks",
+      "singular": "Task",
+      "add": "Add task",
+      "empty": "Nothing on your list.",
+      "fields": { "title": "Title" },
+      "status": { "open": "Open", "done": "Done" }
+    },
+    "goals": {
+      "plural": "Goals",
+      "singular": "Goal",
+      "add": "Add goal",
+      "empty": "No goals yet.",
+      "fields": { "title": "Title", "targetDate": "Target date" },
+      "status": { "active": "Active", "done": "Done" }
+    },
+    "client-management": {
+      "plural": "Clients",
+      "singular": "Client",
+      "add": "Add client",
+      "empty": "No clients yet.",
+      "fields": { "name": "Name", "nextFollowUp": "Next follow-up" },
+      "status": { "active": "Active", "dormant": "Dormant" }
+    },
+    "small-business": {
+      "plural": "Business records",
+      "singular": "Record",
+      "add": "Add record",
+      "empty": "Nothing here yet.",
+      "fields": { "title": "Title", "kind": "Kind", "amount": "Amount" },
+      "kind": { "sale": "Sale", "expense": "Expense", "stock": "Stock" },
+      "status": { "open": "Open", "closed": "Closed" }
+    },
+    "study": {
+      "plural": "Deadlines",
+      "singular": "Deadline",
+      "add": "Add deadline",
+      "empty": "No deadlines yet.",
+      "fields": { "title": "Title", "subject": "Subject" },
+      "status": { "upcoming": "Upcoming", "done": "Done" }
+    },
+    "health": {
+      "plural": "Health reminders",
+      "singular": "Reminder",
+      "add": "Add reminder",
+      "empty": "No reminders yet.",
+      "fields": { "title": "Title", "when": "When" },
+      "status": { "active": "Active", "done": "Done" }
+    },
+    "family": {
+      "plural": "Family notes",
+      "singular": "Note",
+      "add": "Add note",
+      "empty": "Nothing noted yet.",
+      "fields": { "personName": "Person", "note": "Note", "date": "Date" }
+    }
+  },
+  
   "languages": {
     "en": "English",
     "ml": "മലയാളം",
     "hi": "हिन्दी"
   }
 }
+

@@ -25,17 +25,72 @@ src/
       layouts/                #    Layout strategies (StackLayout; grid/adaptive later)
       state/                  #    Zustand store + selectors
       components/             #    Orchestrator (Workspace), EditControls, Empty state
+    records/                  # ── Structured Entity & Record Management ──
+      contracts/              #    Schema, FieldDef, RecordEntity, ReminderSpec
+      registry/               #    Per-module EntitySchemas (primary entity each)
+      state/                  #    Records store (Zustand) + selectors / summaries
+      components/             #    RecordFormSheet, RecordList, RecordRow,
+                              #     RecordDetail, RecordsEmpty, StatusPill
+      repository.ts           #    The only door into the records store
   shared/                     # Cross-feature UI primitives
     components/               # Screen, TouchButton, TextField, CategoryIcon
   services/                   # Side-effect adapters (i18n, mock-intelligence, future: STT)
     i18n/                     # i18next bootstrap + locale JSONs (en, ml, hi)
     mock-intelligence/        # Keyword-based stand-in for the real AI intent layer
-  repositories/               # Data-access contracts (CRUD interfaces) — the only data door
+  repositories/               # Legacy data-access contracts (Phase 1) — records
+                              # supersedes these for module data.
   store/                      # Zustand stores for app-wide UI state (theme, locale)
   hooks/                      # Generic React hooks
   integrations/               # Generated SDK clients (Supabase, Lovable broker)
   routes/                     # TanStack Router file-based routes
+                              #   /_authenticated/modules/$moduleId          → list
+                              #   /_authenticated/modules/$moduleId/$recordId → detail
 ```
+
+## Structured Entity & Record Management (Phase 4)
+
+Every module is now backed by a typed, schema-driven entity — promoting
+modules from static cards into mini operating environments.
+
+Pipeline: **schema → repository → renderer**.
+
+1. **Schema** (`features/records/registry/entity.registry.ts`) declares
+   the fields, statuses, grouping, and reminder compatibility for each
+   module's primary entity (e.g. `finance.entry`, `rent.property`,
+   `groceries.item`). Pure data, framework-agnostic, Flutter-portable.
+2. **Repository** (`features/records/repository.ts`) is the only door
+   into the persisted store. CRUD + status + reminder, generic over the
+   schema. Today it wraps a Zustand store persisted under `voice.records`;
+   tomorrow it wraps a Supabase adapter without UI changes.
+3. **Renderer** (`features/records/components/*`) is one set of components
+   that draws every entity:
+   - `RecordFormSheet` — schema-driven bottom drawer (create/edit)
+   - `RecordList` — grouped by status (or none) with sortable structure
+   - `RecordRow` — calm one-line row, tap to open detail
+   - `RecordDetail` — read-focused detail with inline status switcher,
+     edit (reuses the form), delete, and reminder section
+4. **Routes** — two generic routes power every module:
+   - `/_authenticated/modules/$moduleId`             → list view
+   - `/_authenticated/modules/$moduleId/$recordId`   → detail view
+5. **Workspace integration** — `ModuleCard` now reads live summaries
+   from the records repository ("3 pending · 2 paid"), is tappable
+   (opens the list view), and routes any primary `*.add-*` quick-action
+   intent to the list with `?new=1` so the form sheet primes itself.
+
+### Why this shape
+
+- **One schema, one form, one list, one detail.** Adding a new module's
+  entity means writing a schema entry — not new screens.
+- **Records are generic in the store, typed at the edges.** The values
+  map is opaque; consumers project through the schema. This is what lets
+  a future AI orchestrator emit records as JSON without per-module forks.
+- **Honest summaries, never fake numbers.** Counts come from the records
+  store; if a module has no data, the card shows the calm blurb instead
+  of placeholder analytics.
+- **Reminder-ready.** Every record carries a `reminder` field today; the
+  reminder engine ships in a later phase and consumes the existing shape.
+
+
 
 ## Workspace Intelligence Engine (Phase 3)
 
