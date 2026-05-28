@@ -329,7 +329,7 @@
       "fields": { "personName": "Person", "note": "Note", "date": "Date" }
     }
   },
-  "workspace.summary": { "count_one": "{{count}} item", "count_other": "{{count}} items" },
+  
   "languages": {
     "en": "English",
     "ml": "മലയാളം",
