@@ -58,9 +58,10 @@ export function ModuleCard({ composed }: Props) {
         onClick={() => openModule()}
         className="flex w-full items-center gap-3 text-left touch-target"
         aria-label={t("workspace.openModule", {
-          defaultValue: "Open",
-          replace: { name: t(module.titleKey) },
+          defaultValue: "Open {{name}}",
+          name: t(module.titleKey),
         })}
+
       >
         <span
           className={`flex h-11 w-11 items-center justify-center rounded-2xl ${iconClass}`}
