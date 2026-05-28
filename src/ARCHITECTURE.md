@@ -7,23 +7,60 @@ so the boundaries map cleanly to a future Flutter port.
 
 ```
 src/
-  core/                 # Framework-agnostic primitives
-    config/             # APP_CONFIG, constants
-    types/              # Domain data contracts (Reminder, FinanceEntry, …)
-  features/             # Vertical slices — one folder per product module
-    auth/               # Sign-in / sign-up UI + store (scaffold)
-    voice/              # MicButton, voice capture (UI only in Phase 1)
-    settings/           # Language switcher, theme toggle
-  shared/               # Cross-feature UI primitives
-    components/         # Screen, TouchButton, TextField
-  services/             # Side-effect adapters (i18n, future: STT, notifications)
-    i18n/               # i18next bootstrap + locale JSONs (en, ml, hi)
-  repositories/         # Data-access contracts (CRUD interfaces)
-  store/                # Zustand stores for client-only UI state
-  hooks/                # Generic React hooks
-  integrations/         # Generated SDK clients (Supabase, Lovable broker)
-  routes/               # TanStack Router file-based routes
+  core/                       # Framework-agnostic primitives
+    config/                   # APP_CONFIG, constants
+    types/                    # Domain data contracts (Reminder, FinanceEntry, …)
+    categories/               # Life-domain catalog (id, icon, color, keywords)
+  features/                   # Vertical slices — one folder per product module
+    auth/                     # Sign-in / sign-up UI + store (scaffold)
+    voice/                    # MicButton, voice capture (UI only in Phase 1)
+    settings/                 # Language switcher, theme toggle
+    onboarding/               # Conversational onboarding flow + steps
+    workspace/                # ── Workspace Intelligence Engine ──
+      contracts/              #    Pure-data types: ModuleDefinition, Widget, Composition
+      registry/               #    Module registry (modules built from categories + spec)
+      engine/                 #    composeWorkspace(prefs) → WorkspaceComposition
+      renderer/               #    WorkspaceRenderer + ModuleCard + WidgetRenderer
+        widgets/              #    WidgetKind → component (empty-state, quick-actions, …)
+      layouts/                #    Layout strategies (StackLayout; grid/adaptive later)
+      state/                  #    Zustand store + selectors
+      components/             #    Orchestrator (Workspace), EditControls, Empty state
+  shared/                     # Cross-feature UI primitives
+    components/               # Screen, TouchButton, TextField, CategoryIcon
+  services/                   # Side-effect adapters (i18n, mock-intelligence, future: STT)
+    i18n/                     # i18next bootstrap + locale JSONs (en, ml, hi)
+    mock-intelligence/        # Keyword-based stand-in for the real AI intent layer
+  repositories/               # Data-access contracts (CRUD interfaces) — the only data door
+  store/                      # Zustand stores for app-wide UI state (theme, locale)
+  hooks/                      # Generic React hooks
+  integrations/               # Generated SDK clients (Supabase, Lovable broker)
+  routes/                     # TanStack Router file-based routes
 ```
+
+## Workspace Intelligence Engine (Phase 3)
+
+Pipeline: **state → engine → renderer**.
+
+1. **State** (`features/workspace/state`) holds the user's preferences:
+   which modules are enabled, in what order, what's hidden, and what they
+   said during onboarding. Persisted under `voice.workspace` (versioned).
+2. **Engine** (`features/workspace/engine/composer.ts`) is a pure function
+   `(WorkspacePreferences) → WorkspaceComposition`. No React, no I/O.
+   The future AI orchestrator will emit a `WorkspaceComposition` directly,
+   bypassing the composer — same downstream code path.
+3. **Registry** (`features/workspace/registry`) is the catalog of module
+   definitions. Each module declares default widgets, quick actions, and
+   AI intent hooks. Adding a module is additive (no engine changes).
+4. **Renderer** (`features/workspace/renderer`) walks the composition.
+   `WidgetRenderer` resolves `WidgetKind → component` via a registry, so
+   new widget kinds plug in without touching the engine.
+5. **Layouts** (`features/workspace/layouts`) own visual arrangement —
+   `StackLayout` today; grid/adaptive ship as siblings selected via
+   `WorkspaceComposition.strategy`.
+
+Honest empty states: data-bound widget kinds (`summary`, `list`,
+`reminder`) currently render the empty-state widget. No fake numbers,
+no demo content. Each kind is upgraded when its feature module lands.
 
 ### Why this shape
 

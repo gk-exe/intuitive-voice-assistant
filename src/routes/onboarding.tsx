@@ -16,7 +16,7 @@ import {
   type CategoryId,
 } from "@/core/categories/registry";
 import { detectCategories } from "@/services/mock-intelligence";
-import { useWorkspaceStore } from "@/store/workspace.store";
+import { useWorkspaceStore } from "@/features/workspace/state";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({

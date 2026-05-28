@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { LanguageSwitcher } from "@/features/settings/components/LanguageSwitcher";
-import { useWorkspaceStore } from "@/store/workspace.store";
+import { useWorkspaceStore } from "@/features/workspace/state";
 
 export const Route = createFileRoute("/")({
   head: () => ({

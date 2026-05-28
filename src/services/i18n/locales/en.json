@@ -45,6 +45,15 @@
     },
     "empty": "Nothing yet. Try saying something."
   },
+  "workspace": {
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "defaultEmpty": "Nothing here yet — tap the mic anytime.",
+    "empty": {
+      "title": "Your space is a fresh page.",
+      "body": "Pick an area to start with. You can change it anytime."
+    }
+  },
   "onboarding": {
     "finish": "Set up my space",
     "nothingPicked": "No areas chosen yet. Pick at least one to continue.",
@@ -80,6 +89,99 @@
     "study": "Study",
     "health": "Health",
     "family": "Family"
+  },
+  "modules": {
+    "finance": {
+      "blurb": "Money owed, money paid.",
+      "empty": "No finance entries yet. Add one when you're ready.",
+      "actions": {
+        "addEntry": "Add entry",
+        "logPayment": "Log payment"
+      }
+    },
+    "groceries": {
+      "blurb": "What to pick up next.",
+      "empty": "Your grocery list is empty. Add the first thing you need.",
+      "actions": {
+        "addItem": "Add item",
+        "voiceList": "Say a list"
+      }
+    },
+    "rent": {
+      "blurb": "Tenants and rent reminders.",
+      "empty": "No tenants added yet. Start with one.",
+      "actions": {
+        "addTenant": "Add tenant",
+        "logRent": "Log rent"
+      }
+    },
+    "property-sale": {
+      "blurb": "Buyers, listings, follow-ups.",
+      "empty": "No listings yet. Add one to begin.",
+      "actions": {
+        "addListing": "Add listing",
+        "addBuyer": "Add buyer"
+      }
+    },
+    "bills": {
+      "blurb": "Utilities and recurring payments.",
+      "empty": "No bills tracked yet. Add one to stay ahead.",
+      "actions": {
+        "addBill": "Add bill",
+        "markPaid": "Mark paid"
+      }
+    },
+    "tasks": {
+      "blurb": "Small things to remember.",
+      "empty": "Nothing on your list. Add a task or tap the mic.",
+      "actions": {
+        "addTask": "Add task"
+      }
+    },
+    "goals": {
+      "blurb": "What you're working toward.",
+      "empty": "No goals yet. Add the first thing you're working toward.",
+      "actions": {
+        "addGoal": "Add goal"
+      }
+    },
+    "client-management": {
+      "blurb": "People who depend on you.",
+      "empty": "No clients yet. Add one to start tracking.",
+      "actions": {
+        "addClient": "Add client",
+        "logFollowup": "Log follow-up"
+      }
+    },
+    "small-business": {
+      "blurb": "Your work, simplified.",
+      "empty": "Nothing here yet. Add a sale or some stock to start.",
+      "actions": {
+        "addSale": "Add sale",
+        "addStock": "Add stock"
+      }
+    },
+    "study": {
+      "blurb": "Lessons, deadlines, notes.",
+      "empty": "No deadlines yet. Add one to plan ahead.",
+      "actions": {
+        "addDeadline": "Add deadline"
+      }
+    },
+    "health": {
+      "blurb": "Medicines, appointments, routines.",
+      "empty": "No reminders yet. Add one to begin.",
+      "actions": {
+        "addReminder": "Add reminder"
+      }
+    },
+    "family": {
+      "blurb": "The people closest to you.",
+      "empty": "Nothing noted yet. Add a name or a moment.",
+      "actions": {
+        "addNote": "Add note"
+      }
+    }
   },
   "languages": {
     "en": "English",
