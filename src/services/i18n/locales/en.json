@@ -48,12 +48,18 @@
   "workspace": {
     "moveUp": "Move up",
     "moveDown": "Move down",
+    "openModule": "Open {{name}}",
     "defaultEmpty": "Nothing here yet — tap the mic anytime.",
+    "summary": {
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items"
+    },
     "empty": {
       "title": "Your space is a fresh page.",
       "body": "Pick an area to start with. You can change it anytime."
     }
   },
+
   "onboarding": {
     "finish": "Set up my space",
     "nothingPicked": "No areas chosen yet. Pick at least one to continue.",
