@@ -34,10 +34,8 @@ function RecordDetailPage() {
   // Records live in a client-persisted store. On the very first paint the
   // store may not be hydrated yet — render a calm placeholder instead of a
   // false "not found" flash.
-  const { useHasMounted } = require("@/hooks/useHasMounted") as {
-    useHasMounted: () => boolean;
-  };
   const mounted = useHasMounted();
+
 
   const valid = isKnownModule(moduleId);
   const schema = valid ? getPrimaryEntityForModule(moduleId) : undefined;
