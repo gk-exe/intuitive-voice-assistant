@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { RouteError, RouteNotFound } from "@/shared/components/RouteError";
+import { useHasMounted } from "@/hooks/useHasMounted";
 import { isKnownModule } from "@/features/workspace/registry";
 import {
   RecordDetail,
