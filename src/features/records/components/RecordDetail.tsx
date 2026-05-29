@@ -9,9 +9,11 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { TouchButton } from "@/shared/components/TouchButton";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import type { EntitySchema, RecordEntity } from "../contracts";
 import { recordsRepository } from "../repository";
 import {
@@ -31,7 +33,9 @@ interface Props {
 export function RecordDetail({ record, schema, onDeleted }: Props) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const status = schema.statuses?.find((s) => s.key === record.status);
+
 
   function resolveDisplay(fieldKey: string, raw: unknown): string {
     const field = schema.fields.find((f) => f.key === fieldKey);
@@ -65,9 +69,13 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
                 <button
                   key={s.key}
                   type="button"
-                  onClick={() => recordsRepository.setStatus(record.id, s.key)}
+                  onClick={() => {
+                    if (active) return;
+                    recordsRepository.setStatus(record.id, s.key);
+                    toast.success(t(s.labelKey));
+                  }}
                   className={[
-                    "rounded-full px-3 py-1.5 text-xs touch-target",
+                    "rounded-full px-3 py-1.5 text-xs touch-target transition-colors",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/70",
@@ -80,6 +88,7 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
           </div>
         )}
       </header>
+
 
       <section className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-soft">
         <h3 className="text-sm font-medium text-muted-foreground">
@@ -127,15 +136,7 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
           <Pencil className="size-4" strokeWidth={1.5} />
           {t("common.edit")}
         </TouchButton>
-        <TouchButton
-          variant="ghost"
-          onClick={() => {
-            if (confirm(t("records.detail.confirmDelete", { defaultValue: "Delete this?" }))) {
-              recordsRepository.remove(record.id);
-              onDeleted();
-            }
-          }}
-        >
+        <TouchButton variant="ghost" onClick={() => setConfirming(true)}>
           <Trash2 className="size-4" strokeWidth={1.5} />
           {t("common.delete")}
         </TouchButton>
@@ -148,8 +149,30 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
         record={record}
         onSubmit={(input) => {
           recordsRepository.update(record.id, input);
+          toast.success(
+            t("records.toast.updated", { defaultValue: "Changes saved." }),
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        destructive
+        title={t("records.detail.confirmDelete", { defaultValue: "Delete this?" })}
+        description={t("records.detail.confirmDeleteBody", {
+          defaultValue: "This can't be undone.",
+        })}
+        confirmLabel={t("common.delete")}
+        onConfirm={() => {
+          recordsRepository.remove(record.id);
+          toast.success(
+            t("records.toast.deleted", { defaultValue: "Removed." }),
+          );
+          onDeleted();
         }}
       />
     </div>
   );
 }
+

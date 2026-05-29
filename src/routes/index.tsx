@@ -6,6 +6,7 @@ import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { LanguageSwitcher } from "@/features/settings/components/LanguageSwitcher";
 import { useWorkspaceStore } from "@/features/workspace/state";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,14 +25,24 @@ export const Route = createFileRoute("/")({
 function WelcomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const mounted = useHasMounted();
   const onboardingComplete = useWorkspaceStore((s) => s.onboardingComplete);
 
-  // If the user has already finished onboarding, send them home.
+  // Redirect returning users straight to /home. We wait for client mount so
+  // the persisted Zustand store is hydrated — otherwise SSR renders the
+  // welcome page and we'd briefly flash it before navigating.
   useEffect(() => {
-    if (onboardingComplete) {
+    if (mounted && onboardingComplete) {
       void navigate({ to: "/home", replace: true });
     }
-  }, [onboardingComplete, navigate]);
+  }, [mounted, onboardingComplete, navigate]);
+
+  // While hydrating, render a calm holding state matching the page surface so
+  // there is no jarring flicker between SSR and first client paint.
+  if (!mounted || onboardingComplete) {
+    return <Screen><div aria-hidden className="flex-1" /></Screen>;
+  }
+
 
   return (
     <Screen>

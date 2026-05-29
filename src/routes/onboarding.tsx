@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { ArrowRight, Check } from "lucide-react";
 
 import { Screen } from "@/shared/components/Screen";
@@ -94,8 +95,12 @@ function OnboardingPage() {
   const finish = () => {
     setModules(Array.from(picked));
     completeOnboarding();
-    void navigate({ to: "/home" });
+    toast.success(
+      t("onboarding.toastReady", { defaultValue: "Your workspace is ready." }),
+    );
+    void navigate({ to: "/home", replace: true });
   };
+
 
   const canAdvance = useMemo(() => {
     if (step.kind === "prompt") return true; // optional

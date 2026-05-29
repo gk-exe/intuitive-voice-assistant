@@ -11,6 +11,8 @@ import { ArrowLeft } from "lucide-react";
 
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
+import { RouteError, RouteNotFound } from "@/shared/components/RouteError";
+import { useHasMounted } from "@/hooks/useHasMounted";
 import { isKnownModule } from "@/features/workspace/registry";
 import {
   RecordDetail,
@@ -20,6 +22,8 @@ import {
 
 export const Route = createFileRoute("/_authenticated/modules/$moduleId/$recordId")({
   component: RecordDetailPage,
+  errorComponent: RouteError,
+  notFoundComponent: RouteNotFound,
 });
 
 function RecordDetailPage() {
@@ -27,9 +31,25 @@ function RecordDetailPage() {
   const { moduleId, recordId } = Route.useParams();
   const navigate = useNavigate();
 
+  // Records live in a client-persisted store. On the very first paint the
+  // store may not be hydrated yet — render a calm placeholder instead of a
+  // false "not found" flash.
+  const mounted = useHasMounted();
+
+
   const valid = isKnownModule(moduleId);
   const schema = valid ? getPrimaryEntityForModule(moduleId) : undefined;
   const record = useRecord(recordId);
+
+  if (!mounted) {
+    return (
+      <Screen>
+        <main className="flex-1 py-12" aria-busy="true">
+          <div className="mx-auto h-40 rounded-3xl bg-surface/60" />
+        </main>
+      </Screen>
+    );
+  }
 
   if (!valid || !schema || !record || record.entityType !== schema.id) {
     return (
@@ -50,6 +70,7 @@ function RecordDetailPage() {
       </Screen>
     );
   }
+
 
   return (
     <Screen>

@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import "@/services/i18n";
 import { useApplyTheme } from "@/hooks/useApplyTheme";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -60,7 +61,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1",
+          "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       { name: "theme-color", content: "#c46a3f" },
       { title: "Voice — Talk naturally. Stay organized." },
@@ -124,6 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }

@@ -9,11 +9,13 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { ArrowLeft, Plus } from "lucide-react";
 
 import { Screen } from "@/shared/components/Screen";
 import { CategoryIcon } from "@/shared/components/CategoryIcon";
 import { TouchButton } from "@/shared/components/TouchButton";
+import { RouteError, RouteNotFound } from "@/shared/components/RouteError";
 import { isKnownModule, getModule } from "@/features/workspace/registry";
 import {
   RecordFormSheet,
@@ -31,7 +33,10 @@ export const Route = createFileRoute("/_authenticated/modules/$moduleId")({
     new: search.new === "1" || search.new === 1 ? "1" : undefined,
   }),
   component: ModuleListPage,
+  errorComponent: RouteError,
+  notFoundComponent: RouteNotFound,
 });
+
 
 function ModuleListPage() {
   const { t } = useTranslation();
@@ -143,6 +148,11 @@ function ModuleListPage() {
         schema={schema}
         onSubmit={(input) => {
           recordsRepository.create(schema.id, input);
+          toast.success(
+            t("records.toast.saved", {
+              defaultValue: "Saved.",
+            }),
+          );
         }}
       />
     </Screen>

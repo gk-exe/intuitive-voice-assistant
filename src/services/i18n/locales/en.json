@@ -206,7 +206,13 @@
       "reminder": "Reminder",
       "noDetails": "No extra details yet.",
       "noReminder": "No reminder set yet. We'll surface this when reminders launch.",
-      "confirmDelete": "Delete this?"
+      "confirmDelete": "Delete this?",
+      "confirmDeleteBody": "This can't be undone."
+    },
+    "toast": {
+      "saved": "Saved.",
+      "updated": "Changes saved.",
+      "deleted": "Removed."
     },
     "unknownModule": "That space doesn't exist.",
     "notFound": "We couldn't find that.",
