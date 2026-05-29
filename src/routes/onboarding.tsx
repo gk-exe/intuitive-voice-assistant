@@ -95,8 +95,12 @@ function OnboardingPage() {
   const finish = () => {
     setModules(Array.from(picked));
     completeOnboarding();
-    void navigate({ to: "/home" });
+    toast.success(
+      t("onboarding.toastReady", { defaultValue: "Your workspace is ready." }),
+    );
+    void navigate({ to: "/home", replace: true });
   };
+
 
   const canAdvance = useMemo(() => {
     if (step.kind === "prompt") return true; // optional
