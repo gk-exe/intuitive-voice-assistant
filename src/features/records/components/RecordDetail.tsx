@@ -69,9 +69,13 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
                 <button
                   key={s.key}
                   type="button"
-                  onClick={() => recordsRepository.setStatus(record.id, s.key)}
+                  onClick={() => {
+                    if (active) return;
+                    recordsRepository.setStatus(record.id, s.key);
+                    toast.success(t(s.labelKey));
+                  }}
                   className={[
-                    "rounded-full px-3 py-1.5 text-xs touch-target",
+                    "rounded-full px-3 py-1.5 text-xs touch-target transition-colors",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/70",
@@ -84,6 +88,7 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
           </div>
         )}
       </header>
+
 
       <section className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-soft">
         <h3 className="text-sm font-medium text-muted-foreground">
