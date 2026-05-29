@@ -6,6 +6,7 @@ import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { LanguageSwitcher } from "@/features/settings/components/LanguageSwitcher";
 import { useWorkspaceStore } from "@/features/workspace/state";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 export const Route = createFileRoute("/")({
   head: () => ({
