@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 
 import { listCategories } from "@/core/categories/registry";
 import { CategoryChip } from "@/features/onboarding/components/CategoryChip";
+import { useHasMounted } from "@/hooks/useHasMounted";
 import {
   useWorkspaceComposition,
   useWorkspaceStore,
@@ -27,17 +28,32 @@ import { WorkspaceEmpty } from "./WorkspaceEmpty";
 
 export function Workspace() {
   const { t } = useTranslation();
+  const mounted = useHasMounted();
   const composition = useWorkspaceComposition();
   const addModule = useWorkspaceStore((s) => s.addModule);
 
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
 
+  // Avoid hydration flicker: the composition is derived from persisted
+  // state. On SSR we render a quiet placeholder so the warm sand surface
+  // stays stable until the client takes over.
+  if (!mounted) {
+    return (
+      <section className="flex flex-col gap-4" aria-busy="true">
+        <div className="h-3 w-24 rounded-full bg-muted" />
+        <div className="h-24 rounded-3xl bg-surface/60" />
+        <div className="h-24 rounded-3xl bg-surface/60" />
+      </section>
+    );
+  }
+
   const enabled = new Set(composition.modules.map((c) => c.module.id));
   const available = listCategories().filter((c) => !enabled.has(c.id));
 
   const isEmpty = composition.modules.length === 0;
   const lastIndex = composition.modules.length - 1;
+
 
   return (
     <section className="flex flex-col gap-4" aria-label={t("home.sections.workspace")}>
