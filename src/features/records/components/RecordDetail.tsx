@@ -9,9 +9,11 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { TouchButton } from "@/shared/components/TouchButton";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import type { EntitySchema, RecordEntity } from "../contracts";
 import { recordsRepository } from "../repository";
 import {
