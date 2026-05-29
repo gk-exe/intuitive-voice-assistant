@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
+import { RouteError, RouteNotFound } from "@/shared/components/RouteError";
 import { isKnownModule } from "@/features/workspace/registry";
 import {
   RecordDetail,
@@ -20,6 +21,8 @@ import {
 
 export const Route = createFileRoute("/_authenticated/modules/$moduleId/$recordId")({
   component: RecordDetailPage,
+  errorComponent: RouteError,
+  notFoundComponent: RouteNotFound,
 });
 
 function RecordDetailPage() {
