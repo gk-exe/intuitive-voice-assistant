@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import "@/services/i18n";
 import { useApplyTheme } from "@/hooks/useApplyTheme";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
