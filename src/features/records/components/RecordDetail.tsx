@@ -136,15 +136,7 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
           <Pencil className="size-4" strokeWidth={1.5} />
           {t("common.edit")}
         </TouchButton>
-        <TouchButton
-          variant="ghost"
-          onClick={() => {
-            if (confirm(t("records.detail.confirmDelete", { defaultValue: "Delete this?" }))) {
-              recordsRepository.remove(record.id);
-              onDeleted();
-            }
-          }}
-        >
+        <TouchButton variant="ghost" onClick={() => setConfirming(true)}>
           <Trash2 className="size-4" strokeWidth={1.5} />
           {t("common.delete")}
         </TouchButton>
@@ -157,8 +149,30 @@ export function RecordDetail({ record, schema, onDeleted }: Props) {
         record={record}
         onSubmit={(input) => {
           recordsRepository.update(record.id, input);
+          toast.success(
+            t("records.toast.updated", { defaultValue: "Changes saved." }),
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        destructive
+        title={t("records.detail.confirmDelete", { defaultValue: "Delete this?" })}
+        description={t("records.detail.confirmDeleteBody", {
+          defaultValue: "This can't be undone.",
+        })}
+        confirmLabel={t("common.delete")}
+        onConfirm={() => {
+          recordsRepository.remove(record.id);
+          toast.success(
+            t("records.toast.deleted", { defaultValue: "Removed." }),
+          );
+          onDeleted();
         }}
       />
     </div>
   );
 }
+
