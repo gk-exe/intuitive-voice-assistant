@@ -33,7 +33,9 @@ interface Props {
 export function RecordDetail({ record, schema, onDeleted }: Props) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const status = schema.statuses?.find((s) => s.key === record.status);
+
 
   function resolveDisplay(fieldKey: string, raw: unknown): string {
     const field = schema.fields.find((f) => f.key === fieldKey);
