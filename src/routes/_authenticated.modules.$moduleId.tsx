@@ -148,6 +148,11 @@ function ModuleListPage() {
         schema={schema}
         onSubmit={(input) => {
           recordsRepository.create(schema.id, input);
+          toast.success(
+            t("records.toast.saved", {
+              defaultValue: "Saved.",
+            }),
+          );
         }}
       />
     </Screen>
