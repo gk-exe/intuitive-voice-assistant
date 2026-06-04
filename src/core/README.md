@@ -17,7 +17,9 @@ core/
   memory/         User memory namespaces, scopes, update rules (Phase 6)
   events/         Platform event bus — the spine for reactive systems
   automation/     Rule-based automation engine contracts
-  relations/      Cross-module relation graph + coordination policies
+  relations/      Module-level coordination policies (built on knowledge)
+  knowledge/      Canonical entities, relationships, timeline, context,
+                  search, and AI knowledge service (Phase 7)
 ```
 
 Feature folders (`features/*`) and services (`services/*`) implement
