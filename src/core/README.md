@@ -20,6 +20,8 @@ core/
   relations/      Module-level coordination policies (built on knowledge)
   knowledge/      Canonical entities, relationships, timeline, context,
                   search, and AI knowledge service (Phase 7)
+  capture/        Unified capture pipeline, action model, drafts,
+                  confirmation, and action history (Phase 8)
 ```
 
 Feature folders (`features/*`) and services (`services/*`) implement
