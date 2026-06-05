@@ -10,7 +10,7 @@
  * original via `reversesActionId` — never an in-place mutation.
  */
 
-import type { CanonicalEntityRef } from "@/core/knowledge/contracts/entity";
+import type { CanonicalEntityRef } from "./action";
 import type { ActionType, ActionSource, CaptureAction } from "./action";
 
 export type HistoryOutcome = "committed" | "failed" | "reversed";

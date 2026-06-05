@@ -15,7 +15,13 @@
  */
 
 import type { CategoryId } from "@/core/categories/registry";
-import type { CanonicalEntityRef } from "@/core/knowledge/contracts/entity";
+import type { CanonicalEntityKind, EntityId } from "@/core/knowledge/contracts/entity";
+
+/** Lightweight pointer to a canonical entity, JSON-safe. */
+export interface CanonicalEntityRef {
+  kind: CanonicalEntityKind;
+  id: EntityId;
+}
 
 /** The closed set of operations the platform understands today. Grows additively. */
 export type ActionType =
