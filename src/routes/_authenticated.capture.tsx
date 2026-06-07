@@ -221,7 +221,7 @@ function hasTitle(d: DraftCandidate): boolean {
 
 interface CandidateCardProps {
   draft: DraftCandidate;
-  onChange: (patch: Partial<DraftCandidate["values"]>) => void;
+  onChange: (patch: Record<string, string | number | null>) => void;
   onRemove: () => void;
 }
 
