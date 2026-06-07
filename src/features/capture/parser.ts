@@ -62,18 +62,22 @@ const STOPWORDS = new Set([
 ]);
 
 function findAmount(text: string): number | null {
-  // Matches "15000", "15,000", "rs 1500", "₹1500", "1.5k"
-  const km = text.match(/(?:rs\.?|₹|inr)?\s*([\d][\d,]*(?:\.\d+)?)\s*(k|lakh|lac)?/i);
-  if (!km) return null;
-  const raw = km[1].replace(/,/g, "");
-  let n = Number(raw);
-  if (!Number.isFinite(n)) return null;
-  const unit = (km[2] ?? "").toLowerCase();
-  if (unit === "k") n *= 1000;
-  if (unit === "lakh" || unit === "lac") n *= 100000;
-  // Filter out obvious non-amounts like phone fragments / years.
-  if (n < 10) return null;
-  return Math.round(n);
+  // Matches "15000", "15,000", "rs 1500", "₹1500", "1.5k", "2 lakh".
+  // Skips ordinals ("15th") and tiny numbers.
+  const re = /(?:rs\.?|₹|inr)?\s*([\d][\d,]*(?:\.\d+)?)\s*(k|lakh|lac)?(?!\s*(?:st|nd|rd|th)\b)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const raw = m[1].replace(/,/g, "");
+    let n = Number(raw);
+    if (!Number.isFinite(n)) continue;
+    const unit = (m[2] ?? "").toLowerCase();
+    if (unit === "k") n *= 1000;
+    if (unit === "lakh" || unit === "lac") n *= 100000;
+    // Reject anything that looks like a small day-of-month sitting alone.
+    if (n < 100 && !unit && !/[₹rs]/i.test(m[0])) continue;
+    return Math.round(n);
+  }
+  return null;
 }
 
 function findPersonName(text: string): string | null {
