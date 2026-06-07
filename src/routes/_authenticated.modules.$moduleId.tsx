@@ -147,7 +147,7 @@ function ModuleListPage() {
         onOpenChange={setAddOpen}
         schema={schema}
         onSubmit={(input) => {
-          recordsRepository.create(schema.id, input);
+          commitRecord(schema.id, input, { source: "manual" });
           toast.success(
             t("records.toast.saved", {
               defaultValue: "Saved.",
