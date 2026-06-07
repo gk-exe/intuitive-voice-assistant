@@ -22,10 +22,10 @@ import {
   RecordList,
   RecordsEmpty,
   getPrimaryEntityForModule,
-  recordsRepository,
   useModuleSummary,
   useRecords,
 } from "@/features/records";
+import { commitRecord } from "@/features/capture/commit";
 import { formatMoney } from "@/features/records/components/formatters";
 
 export const Route = createFileRoute("/_authenticated/modules/$moduleId")({
@@ -147,7 +147,7 @@ function ModuleListPage() {
         onOpenChange={setAddOpen}
         schema={schema}
         onSubmit={(input) => {
-          recordsRepository.create(schema.id, input);
+          commitRecord(schema.id, input, { source: "manual" });
           toast.success(
             t("records.toast.saved", {
               defaultValue: "Saved.",
