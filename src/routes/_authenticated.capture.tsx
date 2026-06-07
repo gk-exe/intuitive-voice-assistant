@@ -263,7 +263,7 @@ function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
       <div className="flex flex-col gap-3">
         {titleField && (
           <InlineField
-            label={titleField.labelKey.split(".").pop() ?? "Title"}
+            label={humanize(titleField.key)}
             value={(draft.values[titleField.key] as string | null) ?? ""}
             placeholder="—"
             onChange={(v) => onChange({ [titleField.key]: v })}
