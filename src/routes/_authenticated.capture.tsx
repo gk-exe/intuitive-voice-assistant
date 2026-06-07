@@ -17,7 +17,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
+import { ArrowLeft, Check, Mic, Sparkles, X } from "lucide-react";
 import { ArrowLeft, Check, Mic, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
