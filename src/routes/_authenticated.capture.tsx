@@ -64,9 +64,11 @@ function CapturePage() {
 
   const canSave = drafts.length > 0 && drafts.some((d) => hasTitle(d));
 
-  function updateDraft(key: string, patch: Partial<DraftCandidate["values"]>) {
+  function updateDraft(key: string, patch: Record<string, string | number | null>) {
     setDrafts((prev) =>
-      prev.map((d) => (d._key === key ? { ...d, values: { ...d.values, ...patch } } : d)),
+      prev.map((d) =>
+        d._key === key ? { ...d, values: { ...d.values, ...patch } } : d,
+      ) as DraftCandidate[],
     );
     setTouched(true);
   }
