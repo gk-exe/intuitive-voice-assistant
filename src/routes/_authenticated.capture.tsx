@@ -322,3 +322,14 @@ function InlineField({ label, value, onChange, type = "text", inputMode, placeho
     </label>
   );
 }
+
+function humanize(key: string): string {
+  // personName → "Person", dueDate → "Date", label → "Label"
+  const spaced = key
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim();
+  // Take the first word so the chip stays short and calm.
+  const first = spaced.split(" ")[0];
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
