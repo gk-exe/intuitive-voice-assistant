@@ -22,10 +22,10 @@ import {
   RecordList,
   RecordsEmpty,
   getPrimaryEntityForModule,
-  recordsRepository,
   useModuleSummary,
   useRecords,
 } from "@/features/records";
+import { commitRecord } from "@/features/capture/commit";
 import { formatMoney } from "@/features/records/components/formatters";
 
 export const Route = createFileRoute("/_authenticated/modules/$moduleId")({
