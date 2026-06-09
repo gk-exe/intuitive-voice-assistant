@@ -27,6 +27,7 @@ import { getModule } from "@/features/workspace/registry";
 import { parseCapture, type CaptureCandidate } from "@/features/capture/parser";
 import { CAPTURE_TEMPLATES } from "@/features/capture/templates";
 import { commitRecord } from "@/features/capture/commit";
+import { VoiceRecorderSheet } from "@/features/voice/components/VoiceRecorderSheet";
 
 export const Route = createFileRoute("/_authenticated/capture")({
   head: () => ({
@@ -49,6 +50,8 @@ function CapturePage() {
   const [text, setText] = useState("");
   const [drafts, setDrafts] = useState<DraftCandidate[]>([]);
   const [touched, setTouched] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [lastSource, setLastSource] = useState<"manual" | "voice">("manual");
 
   // Re-parse whenever text changes; small enough to be cheap.
   const parsed = useMemo(() => parseCapture(text), [text]);
@@ -78,6 +81,12 @@ function CapturePage() {
     setTouched(true);
   }
 
+  function handleVoiceTranscript(transcript: string) {
+    const next = text.trim() ? `${text.trim()} ${transcript}` : transcript;
+    setText(next);
+    setLastSource("voice");
+  }
+
   function handleSave() {
     let count = 0;
     for (const d of drafts) {
@@ -86,7 +95,7 @@ function CapturePage() {
       commitRecord(
         d.entityType,
         { values: d.values, status: d.status, reminder },
-        { source: "capture" },
+        { source: lastSource === "voice" ? "voice" : "capture" },
       );
       count += 1;
     }
@@ -97,6 +106,7 @@ function CapturePage() {
     toast.success(count === 1 ? "Saved." : `${count} saved.`);
     setText("");
     setDrafts([]);
+    setLastSource("manual");
     navigate({ to: "/home" });
   }
 
@@ -137,17 +147,16 @@ function CapturePage() {
           <div className="flex items-center justify-between gap-2 pt-2">
             <button
               type="button"
-              disabled
-              title="Voice coming soon"
-              className="flex items-center gap-1 rounded-full bg-primary-soft px-3 py-2 text-sm text-foreground/70 opacity-70 touch-target"
+              onClick={() => setVoiceOpen(true)}
+              className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground touch-target"
             >
-              <Mic className="size-4" strokeWidth={1.5} />
-              Voice (soon)
+              <Mic className="size-4" strokeWidth={1.75} />
+              Speak
             </button>
             {text.trim() && (
               <button
                 type="button"
-                onClick={() => setText("")}
+                onClick={() => { setText(""); setLastSource("manual"); }}
                 className="rounded-full px-3 py-2 text-sm text-muted-foreground touch-target"
               >
                 Clear
@@ -155,6 +164,12 @@ function CapturePage() {
             )}
           </div>
         </div>
+
+        <VoiceRecorderSheet
+          open={voiceOpen}
+          onClose={() => setVoiceOpen(false)}
+          onTranscript={handleVoiceTranscript}
+        />
 
         {!text.trim() && (
           <section aria-label="Examples" className="flex flex-col gap-2">
