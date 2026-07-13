@@ -1,26 +1,37 @@
 /**
  * useSpeechRecognition — thin, stable wrapper around the Web Speech API.
  *
- * Why this exists in its current shape
- * ------------------------------------
- * The first cut used a functional state updater:
- *   setFinalText(prev => prev + delta)
- * That doubled (or tripled) the first words of every utterance, e.g.
- *   "remind remind remind me to buy groceries"
+ * ROOT CAUSE of the "remind remind remind me…" bug
+ * ------------------------------------------------
+ * The Web Speech API is fundamentally an *incremental* stream. On every
+ * `onresult` event it re-emits a `results` list; `event.resultIndex` marks
+ * where the *newly changed* items start. Two things make a naive delta
+ * assembler duplicate words:
  *
- * Two compounding causes:
- *   1. React StrictMode invokes state updaters TWICE in development to
- *      surface side-effects. Because `delta` was captured in the closure,
- *      each `onresult` event appended the same delta twice.
- *   2. Some browsers (Chrome on Android in particular) re-emit the same
- *      final result with a later `resultIndex` if the recognizer revises
- *      its confidence. A delta-based assembler counts those twice.
+ *   1. React StrictMode invokes state updaters twice in dev. Any
+ *      `setX(prev => prev + delta)` accumulator therefore appends the same
+ *      delta twice.
+ *   2. Chrome (esp. Android + Malayalam/Hindi locales) re-emits finalized
+ *      segments at the same or a later `resultIndex` when it revises its
+ *      confidence. Iterating from `resultIndex` and appending the returned
+ *      transcript effectively re-adds words that were already committed.
  *
- * Fix: never accumulate via functional state. Instead, keep a ref keyed
- * by `resultIndex` that maps to the latest known transcript for that
- * index. On every `onresult`, recompute the absolute final + interim
- * strings and `setState` to the absolute value. This is idempotent under
- * StrictMode and under browser re-emits.
+ * STABILITY STRATEGY
+ * ------------------
+ * Treat the recognizer's `results` array as the single source of truth.
+ * On every `onresult`, walk ALL entries from index 0 and rebuild:
+ *
+ *   - `finalsRef` — a Map<index, transcript> for finalized segments
+ *   - `interim`   — the concatenation of non-final segments
+ *
+ * Then assign the assembled strings to state (never a functional updater).
+ * This is idempotent under StrictMode, under browser re-emits, and under
+ * out-of-order events. Each spoken phrase can only appear once because it
+ * only exists once in `event.results`.
+ *
+ * The `committedRef` prefix carries text across `resume()` calls (user
+ * pauses, then adds more) and across manual edits, so subsequent sessions
+ * append cleanly instead of overwriting.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -69,14 +80,14 @@ export type RecognitionStatus =
 export interface UseSpeechRecognition {
   isSupported: boolean;
   status: RecognitionStatus;
-  /** Stable, fully-final transcript so far (across pauses, if appending). */
+  /** Stable, fully-final transcript (across pauses, if resuming). */
   finalText: string;
   /** Latest interim (in-flight) transcript — replaced on every chunk. */
   interimText: string;
-  /** finalText + interimText, convenient for read-only display. */
+  /** finalText + interimText, for read-only display. */
   liveText: string;
   errorMessage: string | null;
-  /** Start a fresh session, clearing previous transcript. */
+  /** Start a fresh session, clearing any previous transcript. */
   start: (locale: string) => void;
   /** Resume into the existing transcript (appends new finals after a space). */
   resume: (locale: string) => void;
@@ -87,17 +98,10 @@ export interface UseSpeechRecognition {
   setTranscript: (text: string) => void;
 }
 
-/** Tidy whitespace + remove accidental adjacent-word duplicates (case-insensitive). */
-function tidy(input: string): string {
-  const s = input.replace(/\s+/g, " ").trim();
-  if (!s) return s;
-  const out: string[] = [];
-  for (const w of s.split(" ")) {
-    const prev = out[out.length - 1];
-    if (prev && prev.toLowerCase() === w.toLowerCase()) continue;
-    out.push(w);
-  }
-  return out.join(" ");
+/** Whitespace normaliser. Intentionally does NOT collapse adjacent duplicate
+ *  words — legitimate phrases like "that that thing" must survive. */
+function normalize(input: string): string {
+  return input.replace(/\s+/g, " ").trim();
 }
 
 export function useSpeechRecognition(): UseSpeechRecognition {
@@ -112,12 +116,11 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const recRef = useRef<SpeechRecognitionLike | null>(null);
+  const startingRef = useRef(false);
   const cancelledRef = useRef(false);
-  /** Absolute store of final segments keyed by resultIndex. */
+  /** Absolute store of finalized segments keyed by their results-array index. */
   const finalsRef = useRef<Map<number, string>>(new Map());
-  /** Index offset added to a session's resultIndex so resume() doesn't collide. */
-  const indexOffsetRef = useRef(0);
-  /** Text the user has manually committed (locked in) before the current session. */
+  /** Text locked in before the current session (from previous resume/edit). */
   const committedRef = useRef("");
 
   const teardown = useCallback(() => {
@@ -128,22 +131,25 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     rec.onend = null;
     rec.onstart = null;
     recRef.current = null;
+    startingRef.current = false;
   }, []);
 
   useEffect(() => () => {
+    cancelledRef.current = true;
     try { recRef.current?.abort(); } catch { /* noop */ }
     teardown();
   }, [teardown]);
 
-  /** Recompute absolute text from the finals map and push to state. */
-  const flush = useCallback(() => {
-    // Sort by index to keep transcript order stable even if browsers
-    // re-emit out of order.
+  /** Rebuild the finalText string from committedRef + finalsRef. */
+  const flushFinals = useCallback(() => {
     const keys = Array.from(finalsRef.current.keys()).sort((a, b) => a - b);
-    const finals = keys.map((k) => finalsRef.current.get(k) ?? "").join(" ");
-    const assembled = tidy(
-      committedRef.current ? `${committedRef.current} ${finals}` : finals,
-    );
+    const finals = keys
+      .map((k) => (finalsRef.current.get(k) ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
+    const assembled = committedRef.current
+      ? normalize(`${committedRef.current} ${finals}`)
+      : normalize(finals);
     setFinalText(assembled);
   }, []);
 
@@ -153,91 +159,116 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         setStatus("unsupported");
         return;
       }
-      if (recRef.current) return; // already running
+      // Guard against a StrictMode double-invoke or a rapid double click
+      // spawning two recognizers.
+      if (recRef.current || startingRef.current) return;
+      startingRef.current = true;
 
       setErrorMessage(null);
       cancelledRef.current = false;
 
       if (mode === "fresh") {
         finalsRef.current = new Map();
-        indexOffsetRef.current = 0;
         committedRef.current = "";
         setFinalText("");
         setInterimText("");
       } else {
-        // Bake current transcript into the committed prefix so the new
-        // session starts cleanly from index 0 without colliding.
-        committedRef.current = tidy(
-          [committedRef.current, ...finalsRef.current.values()]
-            .filter(Boolean)
-            .join(" "),
-        );
+        // Bake the current transcript into the committed prefix so the new
+        // session's results-array starts fresh at index 0 without colliding
+        // with the previous session's indices.
+        const carry = [committedRef.current]
+          .concat(
+            Array.from(finalsRef.current.keys())
+              .sort((a, b) => a - b)
+              .map((k) => finalsRef.current.get(k) ?? ""),
+          )
+          .filter(Boolean)
+          .join(" ");
+        committedRef.current = normalize(carry);
         finalsRef.current = new Map();
-        indexOffsetRef.current = 0;
         setInterimText("");
       }
 
       const rec = new Ctor();
       rec.lang = locale;
+      // continuous:true lets slow speakers pause without ending the session.
       rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
-      rec.onstart = () => setStatus("listening");
+      rec.onstart = () => {
+        startingRef.current = false;
+        setStatus("listening");
+      };
 
       rec.onresult = (event) => {
+        // IMPORTANT: iterate from 0, not from event.resultIndex.
+        // Doing an absolute re-scan on every event makes assembly idempotent
+        // under StrictMode double-invoke and under browser result revisions.
+        const nextFinals = new Map<number, string>();
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        const len = event.results.length;
+        for (let i = 0; i < len; i++) {
           const res = event.results[i];
+          if (!res) continue;
           const transcript = (res[0]?.transcript ?? "").trim();
           if (!transcript) continue;
           if (res.isFinal) {
-            // Absolute write — idempotent under StrictMode double-invoke
-            // and under browser re-emits of the same index.
-            finalsRef.current.set(i, transcript);
+            nextFinals.set(i, transcript);
           } else {
             interim += (interim ? " " : "") + transcript;
           }
         }
-        flush();
-        setInterimText(tidy(interim));
+        finalsRef.current = nextFinals;
+        flushFinals();
+        setInterimText(normalize(interim));
       };
 
       rec.onerror = (event) => {
-        if (event.error === "no-speech") {
-          setErrorMessage("I didn't catch that. Try again.");
-        } else if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          setErrorMessage("Microphone permission is blocked.");
-        } else if (event.error === "audio-capture") {
-          setErrorMessage("No microphone found.");
-        } else if (event.error !== "aborted") {
-          setErrorMessage("Something went wrong. Try again.");
-        }
-        if (event.error !== "aborted" && event.error !== "no-speech") {
-          setStatus("error");
+        startingRef.current = false;
+        switch (event.error) {
+          case "no-speech":
+            setErrorMessage("I didn't catch that. Try again.");
+            break;
+          case "not-allowed":
+          case "service-not-allowed":
+            setErrorMessage("Microphone permission is blocked. Enable it in browser settings.");
+            setStatus("error");
+            break;
+          case "audio-capture":
+            setErrorMessage("No microphone found.");
+            setStatus("error");
+            break;
+          case "network":
+            setErrorMessage("Network hiccup — check your connection and try again.");
+            setStatus("error");
+            break;
+          case "aborted":
+            // User-initiated. Silent.
+            break;
+          default:
+            setErrorMessage("Something went wrong. Try again.");
+            setStatus("error");
         }
       };
 
       rec.onend = () => {
         teardown();
         setInterimText("");
-        if (cancelledRef.current) {
-          setStatus("idle");
-        } else {
-          setStatus((s) => (s === "error" ? "error" : "idle"));
-        }
+        setStatus((s) => (s === "error" ? "error" : "idle"));
       };
 
       try {
         rec.start();
         recRef.current = rec;
       } catch {
-        setErrorMessage("Couldn't start the microphone.");
+        startingRef.current = false;
+        setErrorMessage("Couldn't start the microphone. Try again.");
         setStatus("error");
         teardown();
       }
     },
-    [Ctor, flush, teardown],
+    [Ctor, flushFinals, teardown],
   );
 
   const start = useCallback((locale: string) => beginSession(locale, "fresh"), [beginSession]);
@@ -257,16 +288,15 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     }
     finalsRef.current = new Map();
     committedRef.current = "";
-    indexOffsetRef.current = 0;
     setInterimText("");
     setFinalText("");
+    setErrorMessage(null);
     setStatus(isSupported ? "idle" : "unsupported");
   }, [isSupported]);
 
   const reset = useCallback(() => {
     finalsRef.current = new Map();
     committedRef.current = "";
-    indexOffsetRef.current = 0;
     setFinalText("");
     setInterimText("");
     setErrorMessage(null);
@@ -274,8 +304,9 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   }, [isSupported]);
 
   const setTranscript = useCallback((text: string) => {
-    // User edited the transcript directly. Lock it into committedRef so
-    // subsequent resume() sessions append cleanly.
+    // The user edited the transcript directly. Lock it into committedRef so
+    // that any subsequent resume() appends after their edit instead of
+    // overwriting it.
     committedRef.current = text;
     finalsRef.current = new Map();
     setFinalText(text);
