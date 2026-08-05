@@ -275,11 +275,19 @@ function hasTitle(d: DraftCandidate): boolean {
 
 interface CandidateCardProps {
   draft: DraftCandidate;
+  uncertain?: boolean;
   onChange: (patch: Record<string, string | number | null>) => void;
+  onCategoryChange: (moduleId: CategoryId) => void;
   onRemove: () => void;
 }
 
-function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
+function CandidateCard({
+  draft,
+  uncertain = false,
+  onChange,
+  onCategoryChange,
+  onRemove,
+}: CandidateCardProps) {
   const { schema } = draft;
   const mod = getModule(draft.moduleId);
   // Show: title, amount (if any), due (if any). Notes hidden by default.
@@ -289,6 +297,7 @@ function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
 
   return (
     <div className="rounded-3xl bg-surface p-4 shadow-soft">
+
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {mod && (
