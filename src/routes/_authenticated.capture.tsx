@@ -57,17 +57,17 @@ function CapturePage() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [lastSource, setLastSource] = useState<"manual" | "voice">("manual");
 
-  // Re-parse whenever text changes; small enough to be cheap.
-  const parsed = useMemo(() => parseCapture(text), [text]);
+  // AI categorization with instant local fallback.
+  const { candidates, engine, thinking, degradedReason, lowConfidence } =
+    useCategorization(text, lastSource === "voice" ? "voice" : "text");
 
-  // Keep drafts in sync with parser output, unless the user has manually
-  // edited a field. We reset drafts whenever the parser produces a fresh
-  // set (i.e. text changed). Manual edits live as overrides on _key items
-  // by re-using the same _key when reasonable.
+  // Keep drafts in sync with whatever the categorizer currently believes.
+  // Every field stays editable afterwards — the preview is a suggestion.
   useEffect(() => {
-    setDrafts(withKeys(parsed));
+    setDrafts(withKeys(candidates));
     setTouched(false);
-  }, [parsed]);
+  }, [candidates]);
+
 
   const canSave = drafts.length > 0 && drafts.some((d) => hasTitle(d));
 
