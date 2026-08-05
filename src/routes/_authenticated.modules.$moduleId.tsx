@@ -29,9 +29,9 @@ import { commitRecord } from "@/features/capture/commit";
 import { formatMoney } from "@/features/records/components/formatters";
 
 export const Route = createFileRoute("/_authenticated/modules/$moduleId")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    new: search.new === "1" || search.new === 1 ? "1" : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { new?: "1" } =>
+    search.new === "1" || search.new === 1 ? { new: "1" } : {},
+
   component: ModuleListPage,
   errorComponent: RouteError,
   notFoundComponent: RouteNotFound,

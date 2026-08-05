@@ -15,19 +15,23 @@
  *     does not move when STT lands.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, Mic, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Mic, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { CategoryIcon } from "@/shared/components/CategoryIcon";
 import { getModule } from "@/features/workspace/registry";
-import { parseCapture, type CaptureCandidate } from "@/features/capture/parser";
+import { type CaptureCandidate } from "@/features/capture/parser";
+import { useCategorization } from "@/features/capture/useCategorization";
+import { recategorize } from "@/features/capture/ai-mapper";
+import { CATEGORIES, type CategoryId } from "@/core/categories/registry";
 import { CAPTURE_TEMPLATES } from "@/features/capture/templates";
 import { commitRecord } from "@/features/capture/commit";
 import { VoiceRecorderSheet } from "@/features/voice/components/VoiceRecorderSheet";
+
 
 export const Route = createFileRoute("/_authenticated/capture")({
   head: () => ({
@@ -53,17 +57,17 @@ function CapturePage() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [lastSource, setLastSource] = useState<"manual" | "voice">("manual");
 
-  // Re-parse whenever text changes; small enough to be cheap.
-  const parsed = useMemo(() => parseCapture(text), [text]);
+  // AI categorization with instant local fallback.
+  const { candidates, engine, thinking, degradedReason, lowConfidence } =
+    useCategorization(text, lastSource === "voice" ? "voice" : "text");
 
-  // Keep drafts in sync with parser output, unless the user has manually
-  // edited a field. We reset drafts whenever the parser produces a fresh
-  // set (i.e. text changed). Manual edits live as overrides on _key items
-  // by re-using the same _key when reasonable.
+  // Keep drafts in sync with whatever the categorizer currently believes.
+  // Every field stays editable afterwards — the preview is a suggestion.
   useEffect(() => {
-    setDrafts(withKeys(parsed));
+    setDrafts(withKeys(candidates));
     setTouched(false);
-  }, [parsed]);
+  }, [candidates]);
+
 
   const canSave = drafts.length > 0 && drafts.some((d) => hasTitle(d));
 
@@ -80,6 +84,16 @@ function CapturePage() {
     setDrafts((prev) => prev.filter((d) => d._key !== key));
     setTouched(true);
   }
+
+  function changeCategory(key: string, moduleId: CategoryId) {
+    setDrafts((prev) =>
+      prev.map((d) =>
+        d._key === key ? { ...recategorize(d, moduleId), _key: d._key } : d,
+      ),
+    );
+    setTouched(true);
+  }
+
 
   function handleVoiceTranscript(transcript: string) {
     const next = text.trim() ? `${text.trim()} ${transcript}` : transcript;
@@ -195,19 +209,44 @@ function CapturePage() {
         {drafts.length > 0 && (
           <section className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="size-4 text-primary" strokeWidth={1.5} />
-              We understood this as
+              {thinking ? (
+                <Loader2 className="size-4 animate-spin text-primary" strokeWidth={1.5} />
+              ) : (
+                <Sparkles className="size-4 text-primary" strokeWidth={1.5} />
+              )}
+              {thinking ? "Thinking…" : "We understood this as"}
             </div>
+
+            {lowConfidence && !thinking && (
+              <p className="rounded-2xl bg-warning/15 px-4 py-3 text-sm text-foreground">
+                I'm not sure about this one — pick the right category below.
+              </p>
+            )}
+            {degradedReason && !thinking && (
+              <p className="text-xs text-muted-foreground">
+                Organised offline — {degradedReason}
+              </p>
+            )}
+
             {drafts.map((d) => (
               <CandidateCard
                 key={d._key}
                 draft={d}
+                uncertain={lowConfidence || d.confidence < 0.55}
                 onChange={(patch) => updateDraft(d._key, patch)}
+                onCategoryChange={(moduleId) => changeCategory(d._key, moduleId)}
                 onRemove={() => removeDraft(d._key)}
               />
             ))}
+
+            {!thinking && engine === "ai" && (
+              <p className="text-center text-xs text-muted-foreground/70">
+                Sorted by AI · everything stays editable
+              </p>
+            )}
           </section>
         )}
+
 
         {drafts.length > 0 && (
           <div className="safe-bottom sticky bottom-4 flex flex-col gap-2 pt-2">
@@ -236,11 +275,19 @@ function hasTitle(d: DraftCandidate): boolean {
 
 interface CandidateCardProps {
   draft: DraftCandidate;
+  uncertain?: boolean;
   onChange: (patch: Record<string, string | number | null>) => void;
+  onCategoryChange: (moduleId: CategoryId) => void;
   onRemove: () => void;
 }
 
-function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
+function CandidateCard({
+  draft,
+  uncertain = false,
+  onChange,
+  onCategoryChange,
+  onRemove,
+}: CandidateCardProps) {
   const { schema } = draft;
   const mod = getModule(draft.moduleId);
   // Show: title, amount (if any), due (if any). Notes hidden by default.
@@ -250,6 +297,7 @@ function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
 
   return (
     <div className="rounded-3xl bg-surface p-4 shadow-soft">
+
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {mod && (
@@ -275,6 +323,28 @@ function CandidateCard({ draft, onChange, onRemove }: CandidateCardProps) {
       </div>
 
       <div className="flex flex-col gap-3">
+        <label
+          className={[
+            "flex items-center justify-between gap-3 rounded-2xl px-3 py-2",
+            uncertain ? "bg-warning/15" : "bg-background/60",
+          ].join(" ")}
+        >
+          <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+            Category
+          </span>
+          <select
+            value={draft.moduleId}
+            onChange={(e) => onCategoryChange(e.target.value as CategoryId)}
+            className="min-w-0 flex-1 bg-transparent text-right text-base text-foreground focus:outline-none"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+
         {titleField && (
           <InlineField
             label={humanize(titleField.key)}
