@@ -323,6 +323,28 @@ function CandidateCard({
       </div>
 
       <div className="flex flex-col gap-3">
+        <label
+          className={[
+            "flex items-center justify-between gap-3 rounded-2xl px-3 py-2",
+            uncertain ? "bg-warning-soft" : "bg-background/60",
+          ].join(" ")}
+        >
+          <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+            Category
+          </span>
+          <select
+            value={draft.moduleId}
+            onChange={(e) => onCategoryChange(e.target.value as CategoryId)}
+            className="min-w-0 flex-1 bg-transparent text-right text-base text-foreground focus:outline-none"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+
         {titleField && (
           <InlineField
             label={humanize(titleField.key)}
