@@ -15,19 +15,23 @@
  *     does not move when STT lands.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, Mic, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Mic, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Screen } from "@/shared/components/Screen";
 import { TouchButton } from "@/shared/components/TouchButton";
 import { CategoryIcon } from "@/shared/components/CategoryIcon";
 import { getModule } from "@/features/workspace/registry";
-import { parseCapture, type CaptureCandidate } from "@/features/capture/parser";
+import { type CaptureCandidate } from "@/features/capture/parser";
+import { useCategorization } from "@/features/capture/useCategorization";
+import { recategorize } from "@/features/capture/ai-mapper";
+import { CATEGORIES, type CategoryId } from "@/core/categories/registry";
 import { CAPTURE_TEMPLATES } from "@/features/capture/templates";
 import { commitRecord } from "@/features/capture/commit";
 import { VoiceRecorderSheet } from "@/features/voice/components/VoiceRecorderSheet";
+
 
 export const Route = createFileRoute("/_authenticated/capture")({
   head: () => ({
