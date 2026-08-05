@@ -209,19 +209,44 @@ function CapturePage() {
         {drafts.length > 0 && (
           <section className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="size-4 text-primary" strokeWidth={1.5} />
-              We understood this as
+              {thinking ? (
+                <Loader2 className="size-4 animate-spin text-primary" strokeWidth={1.5} />
+              ) : (
+                <Sparkles className="size-4 text-primary" strokeWidth={1.5} />
+              )}
+              {thinking ? "Thinking…" : "We understood this as"}
             </div>
+
+            {lowConfidence && !thinking && (
+              <p className="rounded-2xl bg-warning-soft px-4 py-3 text-sm text-foreground">
+                I'm not sure about this one — pick the right category below.
+              </p>
+            )}
+            {degradedReason && !thinking && (
+              <p className="text-xs text-muted-foreground">
+                Organised offline — {degradedReason}
+              </p>
+            )}
+
             {drafts.map((d) => (
               <CandidateCard
                 key={d._key}
                 draft={d}
+                uncertain={lowConfidence || d.confidence < 0.55}
                 onChange={(patch) => updateDraft(d._key, patch)}
+                onCategoryChange={(moduleId) => changeCategory(d._key, moduleId)}
                 onRemove={() => removeDraft(d._key)}
               />
             ))}
+
+            {!thinking && engine === "ai" && (
+              <p className="text-center text-xs text-muted-foreground/70">
+                Sorted by AI · everything stays editable
+              </p>
+            )}
           </section>
         )}
+
 
         {drafts.length > 0 && (
           <div className="safe-bottom sticky bottom-4 flex flex-col gap-2 pt-2">
