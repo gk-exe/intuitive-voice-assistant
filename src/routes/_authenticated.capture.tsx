@@ -218,7 +218,7 @@ function CapturePage() {
             </div>
 
             {lowConfidence && !thinking && (
-              <p className="rounded-2xl bg-warning-soft px-4 py-3 text-sm text-foreground">
+              <p className="rounded-2xl bg-warning/15 px-4 py-3 text-sm text-foreground">
                 I'm not sure about this one — pick the right category below.
               </p>
             )}
@@ -326,7 +326,7 @@ function CandidateCard({
         <label
           className={[
             "flex items-center justify-between gap-3 rounded-2xl px-3 py-2",
-            uncertain ? "bg-warning-soft" : "bg-background/60",
+            uncertain ? "bg-warning/15" : "bg-background/60",
           ].join(" ")}
         >
           <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
