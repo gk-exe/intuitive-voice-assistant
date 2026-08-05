@@ -85,6 +85,16 @@ function CapturePage() {
     setTouched(true);
   }
 
+  function changeCategory(key: string, moduleId: CategoryId) {
+    setDrafts((prev) =>
+      prev.map((d) =>
+        d._key === key ? { ...recategorize(d, moduleId), _key: d._key } : d,
+      ),
+    );
+    setTouched(true);
+  }
+
+
   function handleVoiceTranscript(transcript: string) {
     const next = text.trim() ? `${text.trim()} ${transcript}` : transcript;
     setText(next);
