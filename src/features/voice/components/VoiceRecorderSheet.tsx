@@ -123,10 +123,14 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     ].join(" ")}
                   >
                     <div className="text-sm font-semibold">{l.label}</div>
-                    <div className={[
-                      "text-[11px]",
-                      locale === l.code ? "text-primary-foreground/80" : "text-muted-foreground",
-                    ].join(" ")}>{l.sub}</div>
+                    <div
+                      className={[
+                        "text-[11px]",
+                        locale === l.code ? "text-primary-foreground/80" : "text-muted-foreground",
+                      ].join(" ")}
+                    >
+                      {l.sub}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -138,12 +142,21 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 <div className="relative flex items-center justify-center">
                   {recording && (
                     <>
-                      <span aria-hidden className="absolute inset-0 rounded-full bg-primary/25 animate-ping" />
-                      <span aria-hidden className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse" />
+                      <span
+                        aria-hidden
+                        className="absolute inset-0 rounded-full bg-primary/25 animate-ping"
+                      />
+                      <span
+                        aria-hidden
+                        className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse"
+                      />
                     </>
                   )}
                   {!recording && sr.isSupported && (
-                    <span aria-hidden className="absolute inset-0 rounded-full bg-primary/15 animate-breathe" />
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 rounded-full bg-primary/15 animate-breathe"
+                    />
                   )}
                   <motion.button
                     type="button"
@@ -156,15 +169,20 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     aria-label={recording ? "Stop recording" : "Start recording"}
                     className={[
                       "relative flex items-center justify-center rounded-full shadow-lifted transition-colors",
-                      recording ? "bg-destructive text-destructive-foreground"
-                                : "bg-primary text-primary-foreground",
+                      recording
+                        ? "bg-destructive text-destructive-foreground"
+                        : "bg-primary text-primary-foreground",
                       !sr.isSupported && "opacity-60",
-                    ].filter(Boolean).join(" ")}
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     style={{ width: 128, height: 128 }}
                   >
-                    {recording
-                      ? <Square className="size-12" strokeWidth={1.5} />
-                      : <Mic className="size-12" strokeWidth={1.5} />}
+                    {recording ? (
+                      <Square className="size-12" strokeWidth={1.5} />
+                    ) : (
+                      <Mic className="size-12" strokeWidth={1.5} />
+                    )}
                   </motion.button>
                 </div>
 
@@ -181,7 +199,10 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
             {/* Transcript area — live while recording, editable in review */}
             {inReview ? (
               <div className="flex flex-col gap-2">
-                <label className="text-xs uppercase tracking-wide text-muted-foreground" htmlFor="voice-edit">
+                <label
+                  className="text-xs uppercase tracking-wide text-muted-foreground"
+                  htmlFor="voice-edit"
+                >
                   Transcript — edit anything that's off
                 </label>
                 <textarea
@@ -204,7 +225,8 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     <span>{sr.finalText}</span>
                     {sr.interimText && (
                       <span className="text-muted-foreground">
-                        {sr.finalText ? " " : ""}{sr.interimText}
+                        {sr.finalText ? " " : ""}
+                        {sr.interimText}
                       </span>
                     )}
                   </>
@@ -231,7 +253,10 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { sr.reset(); sr.start(locale); }}
+                  onClick={() => {
+                    sr.reset();
+                    sr.start(locale);
+                  }}
                   className="touch-target inline-flex items-center justify-center gap-1.5 rounded-2xl bg-surface px-3 py-2 text-sm text-foreground"
                 >
                   <RotateCcw className="size-4" strokeWidth={1.75} />

@@ -55,15 +55,7 @@ interface SpeechRecognitionLike {
 const MAX_RECORDING_MS = 90_000;
 
 /** Words that are commonly repeated intentionally in natural speech. */
-const NATURAL_DOUBLE_WORDS = new Set([
-  "bye",
-  "had",
-  "is",
-  "no",
-  "that",
-  "very",
-  "yes",
-]);
+const NATURAL_DOUBLE_WORDS = new Set(["bye", "had", "is", "no", "that", "very", "yes"]);
 
 interface SREventLike {
   resultIndex: number;
@@ -83,12 +75,7 @@ function getCtor(): SRConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-export type RecognitionStatus =
-  | "idle"
-  | "listening"
-  | "processing"
-  | "error"
-  | "unsupported";
+export type RecognitionStatus = "idle" | "listening" | "processing" | "error" | "unsupported";
 
 export interface UseSpeechRecognition {
   isSupported: boolean;
@@ -175,9 +162,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const Ctor = getCtor();
   const isSupported = Ctor !== null;
 
-  const [status, setStatus] = useState<RecognitionStatus>(
-    isSupported ? "idle" : "unsupported",
-  );
+  const [status, setStatus] = useState<RecognitionStatus>(isSupported ? "idle" : "unsupported");
   const [finalText, setFinalText] = useState("");
   const [interimText, setInterimText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -207,11 +192,18 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     startingRef.current = false;
   }, []);
 
-  useEffect(() => () => {
-    cancelledRef.current = true;
-    try { recRef.current?.abort(); } catch { /* noop */ }
-    teardown();
-  }, [teardown]);
+  useEffect(
+    () => () => {
+      cancelledRef.current = true;
+      try {
+        recRef.current?.abort();
+      } catch {
+        /* noop */
+      }
+      teardown();
+    },
+    [teardown],
+  );
 
   /** Rebuild the finalText string from committedRef + finalsRef. */
   const flushFinals = useCallback(() => {
@@ -278,9 +270,15 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         setStatus("listening");
         timeoutRef.current = setTimeout(() => {
           if (recRef.current !== rec) return;
-          setErrorMessage("Recording stopped after 90 seconds. Review your transcript or add more.");
+          setErrorMessage(
+            "Recording stopped after 90 seconds. Review your transcript or add more.",
+          );
           setStatus("processing");
-          try { rec.stop(); } catch { /* noop */ }
+          try {
+            rec.stop();
+          } catch {
+            /* noop */
+          }
         }, MAX_RECORDING_MS);
       };
 
@@ -347,9 +345,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
           .join(" ");
         const completedSession = mergeWithoutOverlap(sessionFinal, interimRef.current);
         const completed = cleanRecognitionStutter(
-          committedRef.current
-            ? `${committedRef.current} ${completedSession}`
-            : completedSession,
+          committedRef.current ? `${committedRef.current} ${completedSession}` : completedSession,
         );
 
         committedRef.current = completed;
@@ -386,14 +382,22 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     const rec = recRef.current;
     if (!rec) return;
     setStatus("processing");
-    try { rec.stop(); } catch { /* noop */ }
+    try {
+      rec.stop();
+    } catch {
+      /* noop */
+    }
   }, []);
 
   const cancel = useCallback(() => {
     cancelledRef.current = true;
     const rec = recRef.current;
     if (rec) {
-      try { rec.abort(); } catch { /* noop */ }
+      try {
+        rec.abort();
+      } catch {
+        /* noop */
+      }
     }
     finalsRef.current = new Map();
     committedRef.current = "";
