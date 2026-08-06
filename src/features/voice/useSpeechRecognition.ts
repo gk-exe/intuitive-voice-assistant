@@ -367,13 +367,13 @@ export function useSpeechRecognition(): UseSpeechRecognition {
       };
 
       try {
-        rec.start();
         recRef.current = rec;
+        rec.start();
       } catch {
         startingRef.current = false;
         setErrorMessage("Couldn't start the microphone. Try again.");
         setStatus("error");
-        teardown();
+        teardown(rec);
       }
     },
     [Ctor, flushFinals, teardown],
