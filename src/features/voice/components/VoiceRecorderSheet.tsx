@@ -220,9 +220,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 aria-live="polite"
                 className="min-h-[96px] rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground"
               >
-                    {processing ? (
-                      <span className="text-muted-foreground">Creating an accurate transcript…</span>
-                    ) : hasText ? (
+                {processing ? (
+                  <span className="text-muted-foreground">Creating an accurate transcript…</span>
+                ) : hasText ? (
                   <>
                     <span>{sr.finalText}</span>
                     {sr.interimText && (

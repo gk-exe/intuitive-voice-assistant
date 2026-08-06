@@ -30,12 +30,18 @@ export const Route = createFileRoute("/api/transcribe")({
           );
         }
         if (audio.type !== "audio/wav" && audio.type !== "audio/x-wav") {
-          return Response.json({ error: "Only complete WAV recordings are accepted." }, { status: 415 });
+          return Response.json(
+            { error: "Only complete WAV recordings are accepted." },
+            { status: 415 },
+          );
         }
 
         const apiKey = process.env["LOVABLE_API_KEY"];
         if (!apiKey) {
-          return Response.json({ error: "Voice transcription is not configured." }, { status: 503 });
+          return Response.json(
+            { error: "Voice transcription is not configured." },
+            { status: 503 },
+          );
         }
 
         const upstream = new FormData();

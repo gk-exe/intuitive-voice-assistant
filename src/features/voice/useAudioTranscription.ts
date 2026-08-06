@@ -24,8 +24,14 @@ function cleanDuplicatePhrases(input: string): string {
     let duplicateLength = 0;
     const maxLength = Math.min(8, Math.floor((words.length - index) / 2));
     for (let length = maxLength; length >= 1; length -= 1) {
-      const first = words.slice(index, index + length).map(key).join(" ");
-      const second = words.slice(index + length, index + length * 2).map(key).join(" ");
+      const first = words
+        .slice(index, index + length)
+        .map(key)
+        .join(" ");
+      const second = words
+        .slice(index + length, index + length * 2)
+        .map(key)
+        .join(" ");
       if (first && first === second) {
         duplicateLength = length;
         break;
@@ -43,7 +49,12 @@ function cleanDuplicatePhrases(input: string): string {
     const phraseKey = phrase.map(key).join(" ");
     output.push(...phrase);
     index += duplicateLength;
-    while (words.slice(index, index + duplicateLength).map(key).join(" ") === phraseKey) {
+    while (
+      words
+        .slice(index, index + duplicateLength)
+        .map(key)
+        .join(" ") === phraseKey
+    ) {
       index += duplicateLength;
     }
   }
@@ -99,7 +110,8 @@ function encodeWav(chunks: Float32Array[], inputRate: number): Blob {
 }
 
 function transcriptionMessage(status: number): string {
-  if (status === 400 || status === 415) return "That recording could not be heard clearly. Please try again.";
+  if (status === 400 || status === 415)
+    return "That recording could not be heard clearly. Please try again.";
   if (status === 402) return "Voice transcription credits are unavailable right now.";
   if (status === 403 || status === 404) return "Voice transcription is not available right now.";
   if (status === 413) return "That recording was too long. Please record a shorter note.";
@@ -272,10 +284,13 @@ export function useAudioTranscription(): UseSpeechRecognition {
     setStatus(isSupported ? "idle" : "unsupported");
   }, [cancelCapture, isSupported]);
 
-  useEffect(() => () => {
-    void cancelCapture();
-    requestRef.current?.abort();
-  }, [cancelCapture]);
+  useEffect(
+    () => () => {
+      void cancelCapture();
+      requestRef.current?.abort();
+    },
+    [cancelCapture],
+  );
 
   const setTranscript = useCallback((text: string) => {
     committedRef.current = text;
