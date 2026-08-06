@@ -14,6 +14,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated.home'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated.capture'
 import { Route as AuthenticatedModulesModuleIdRouteImport } from './routes/_authenticated.modules.$moduleId'
@@ -41,6 +42,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
+  id: '/api/transcribe',
+  path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/modules/$moduleId': typeof AuthenticatedModulesModuleIdRouteWithChildren
   '/modules/$moduleId/$recordId': typeof AuthenticatedModulesModuleIdRecordIdRoute
 }
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/modules/$moduleId': typeof AuthenticatedModulesModuleIdRouteWithChildren
   '/modules/$moduleId/$recordId': typeof AuthenticatedModulesModuleIdRecordIdRoute
 }
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/_authenticated/modules/$moduleId': typeof AuthenticatedModulesModuleIdRouteWithChildren
   '/_authenticated/modules/$moduleId/$recordId': typeof AuthenticatedModulesModuleIdRecordIdRoute
 }
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/capture'
     | '/home'
+    | '/api/transcribe'
     | '/modules/$moduleId'
     | '/modules/$moduleId/$recordId'
   fileRoutesByTo: FileRoutesByTo
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/capture'
     | '/home'
+    | '/api/transcribe'
     | '/modules/$moduleId'
     | '/modules/$moduleId/$recordId'
   id:
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/capture'
     | '/_authenticated/home'
+    | '/api/transcribe'
     | '/_authenticated/modules/$moduleId'
     | '/_authenticated/modules/$moduleId/$recordId'
   fileRoutesById: FileRoutesById
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  ApiTranscribeRoute: typeof ApiTranscribeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/transcribe': {
+      id: '/api/transcribe'
+      path: '/api/transcribe'
+      fullPath: '/api/transcribe'
+      preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/home': {
@@ -246,17 +266,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  ApiTranscribeRoute: ApiTranscribeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

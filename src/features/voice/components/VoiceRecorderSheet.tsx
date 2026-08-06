@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Square, X, Check, RotateCcw, Plus, Trash2 } from "lucide-react";
 
-import { useSpeechRecognition } from "@/features/voice/useSpeechRecognition";
+import { useAudioTranscription } from "@/features/voice/useAudioTranscription";
 
 export type VoiceLocale = "en-IN" | "ml-IN" | "hi-IN";
 
@@ -34,7 +34,7 @@ interface Props {
 
 export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
   const [locale, setLocale] = useState<VoiceLocale>("en-IN");
-  const sr = useSpeechRecognition();
+  const sr = useAudioTranscription();
 
   // Reset state whenever the sheet is opened.
   useEffect(() => {
@@ -220,7 +220,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 aria-live="polite"
                 className="min-h-[96px] rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground"
               >
-                {hasText ? (
+                    {processing ? (
+                      <span className="text-muted-foreground">Creating an accurate transcript…</span>
+                    ) : hasText ? (
                   <>
                     <span>{sr.finalText}</span>
                     {sr.interimText && (
