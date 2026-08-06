@@ -155,8 +155,18 @@ function cleanRecognitionStutter(input: string): string {
     }
 
     if (repeatedPhraseLength > 0) {
-      cleaned.push(...collapsedWords.slice(index, index + repeatedPhraseLength));
-      index += repeatedPhraseLength * 2;
+      const phrase = collapsedWords.slice(index, index + repeatedPhraseLength);
+      const phraseKey = phrase.map(comparable).join(" ");
+      cleaned.push(...phrase);
+      index += repeatedPhraseLength;
+      while (
+        collapsedWords
+          .slice(index, index + repeatedPhraseLength)
+          .map(comparable)
+          .join(" ") === phraseKey
+      ) {
+        index += repeatedPhraseLength;
+      }
     } else {
       const word = collapsedWords[index];
       if (word) cleaned.push(word);
