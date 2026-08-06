@@ -52,6 +52,19 @@ interface SpeechRecognitionLike {
   abort(): void;
 }
 
+const MAX_RECORDING_MS = 90_000;
+
+/** Words that are commonly repeated intentionally in natural speech. */
+const NATURAL_DOUBLE_WORDS = new Set([
+  "bye",
+  "had",
+  "is",
+  "no",
+  "that",
+  "very",
+  "yes",
+]);
+
 interface SREventLike {
   resultIndex: number;
   results: ArrayLike<{
@@ -104,6 +117,60 @@ function normalize(input: string): string {
   return input.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Removes recognizer stutter without broadly rewriting the user's words.
+ * Three-or-more identical adjacent words are always collapsed. A pair is
+ * collapsed except for a small set of words commonly doubled on purpose.
+ */
+function cleanRecognitionStutter(input: string): string {
+  const words = normalize(input).split(" ").filter(Boolean);
+  const cleaned: string[] = [];
+
+  for (let index = 0; index < words.length; index += 1) {
+    const word = words[index];
+    if (!word) continue;
+    const comparable = word.toLocaleLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+    let runEnd = index + 1;
+    while (runEnd < words.length) {
+      const candidate = words[runEnd];
+      const candidateComparable = candidate
+        ?.toLocaleLowerCase()
+        .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+      if (!comparable || candidateComparable !== comparable) break;
+      runEnd += 1;
+    }
+
+    const runLength = runEnd - index;
+    const keepCount = runLength === 2 && NATURAL_DOUBLE_WORDS.has(comparable) ? 2 : 1;
+    cleaned.push(...words.slice(index, index + keepCount));
+    index = runEnd - 1;
+  }
+
+  return cleaned.join(" ");
+}
+
+/** Merge a final and last interim snapshot without repeating their overlap. */
+function mergeWithoutOverlap(finalText: string, interimText: string): string {
+  const finalWords = normalize(finalText).split(" ").filter(Boolean);
+  const interimWords = normalize(interimText).split(" ").filter(Boolean);
+  if (finalWords.length === 0) return interimWords.join(" ");
+  if (interimWords.length === 0) return finalWords.join(" ");
+
+  const comparable = (word: string) => word.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const maxOverlap = Math.min(finalWords.length, interimWords.length);
+  let overlap = 0;
+  for (let size = maxOverlap; size > 0; size -= 1) {
+    const suffix = finalWords.slice(-size).map(comparable).join(" ");
+    const prefix = interimWords.slice(0, size).map(comparable).join(" ");
+    if (suffix === prefix) {
+      overlap = size;
+      break;
+    }
+  }
+
+  return [...finalWords, ...interimWords.slice(overlap)].join(" ");
+}
+
 export function useSpeechRecognition(): UseSpeechRecognition {
   const Ctor = getCtor();
   const isSupported = Ctor !== null;
@@ -118,19 +185,25 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const startingRef = useRef(false);
   const cancelledRef = useRef(false);
+  const interimRef = useRef("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Absolute store of finalized segments keyed by their results-array index. */
   const finalsRef = useRef<Map<number, string>>(new Map());
   /** Text locked in before the current session (from previous resume/edit). */
   const committedRef = useRef("");
 
-  const teardown = useCallback(() => {
-    const rec = recRef.current;
-    if (!rec) return;
-    rec.onresult = null;
-    rec.onerror = null;
-    rec.onend = null;
-    rec.onstart = null;
-    recRef.current = null;
+  const teardown = useCallback((rec?: SpeechRecognitionLike) => {
+    const active = rec ?? recRef.current;
+    if (!active) return;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    active.onresult = null;
+    active.onerror = null;
+    active.onend = null;
+    active.onstart = null;
+    if (recRef.current === active) recRef.current = null;
     startingRef.current = false;
   }, []);
 
@@ -150,7 +223,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     const assembled = committedRef.current
       ? normalize(`${committedRef.current} ${finals}`)
       : normalize(finals);
-    setFinalText(assembled);
+    setFinalText(cleanRecognitionStutter(assembled));
   }, []);
 
   const beginSession = useCallback(
@@ -172,6 +245,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         committedRef.current = "";
         setFinalText("");
         setInterimText("");
+        interimRef.current = "";
       } else {
         // Bake the current transcript into the committed prefix so the new
         // session's results-array starts fresh at index 0 without colliding
@@ -187,21 +261,31 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         committedRef.current = normalize(carry);
         finalsRef.current = new Map();
         setInterimText("");
+        interimRef.current = "";
       }
 
       const rec = new Ctor();
       rec.lang = locale;
-      // continuous:true lets slow speakers pause without ending the session.
-      rec.continuous = true;
+      // A single utterance is more consistently finalized on mobile than an
+      // indefinitely continuous session. Users can explicitly resume.
+      rec.continuous = false;
       rec.interimResults = true;
-      rec.maxAlternatives = 1;
+      rec.maxAlternatives = 3;
 
       rec.onstart = () => {
+        if (recRef.current !== rec) return;
         startingRef.current = false;
         setStatus("listening");
+        timeoutRef.current = setTimeout(() => {
+          if (recRef.current !== rec) return;
+          setErrorMessage("Recording stopped after 90 seconds. Review your transcript or add more.");
+          setStatus("processing");
+          try { rec.stop(); } catch { /* noop */ }
+        }, MAX_RECORDING_MS);
       };
 
       rec.onresult = (event) => {
+        if (recRef.current !== rec || cancelledRef.current) return;
         // IMPORTANT: iterate from 0, not from event.resultIndex.
         // Doing an absolute re-scan on every event makes assembly idempotent
         // under StrictMode double-invoke and under browser result revisions.
@@ -221,10 +305,12 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         }
         finalsRef.current = nextFinals;
         flushFinals();
-        setInterimText(normalize(interim));
+        interimRef.current = normalize(interim);
+        setInterimText(interimRef.current);
       };
 
       rec.onerror = (event) => {
+        if (recRef.current !== rec || cancelledRef.current) return;
         startingRef.current = false;
         switch (event.error) {
           case "no-speech":
@@ -253,9 +339,31 @@ export function useSpeechRecognition(): UseSpeechRecognition {
       };
 
       rec.onend = () => {
-        teardown();
+        if (recRef.current !== rec) return;
+        const keys = Array.from(finalsRef.current.keys()).sort((a, b) => a - b);
+        const sessionFinal = keys
+          .map((key) => finalsRef.current.get(key) ?? "")
+          .filter(Boolean)
+          .join(" ");
+        const completedSession = mergeWithoutOverlap(sessionFinal, interimRef.current);
+        const completed = cleanRecognitionStutter(
+          committedRef.current
+            ? `${committedRef.current} ${completedSession}`
+            : completedSession,
+        );
+
+        committedRef.current = completed;
+        finalsRef.current = new Map();
+        interimRef.current = "";
+        setFinalText(completed);
         setInterimText("");
-        setStatus((s) => (s === "error" ? "error" : "idle"));
+        if (!completed && !cancelledRef.current) {
+          setErrorMessage("I didn't catch any speech. Try recording again.");
+          setStatus("error");
+        } else {
+          setStatus((current) => (current === "error" ? "error" : "idle"));
+        }
+        teardown(rec);
       };
 
       try {
@@ -277,6 +385,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const stop = useCallback(() => {
     const rec = recRef.current;
     if (!rec) return;
+    setStatus("processing");
     try { rec.stop(); } catch { /* noop */ }
   }, []);
 
@@ -288,6 +397,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     }
     finalsRef.current = new Map();
     committedRef.current = "";
+    interimRef.current = "";
     setInterimText("");
     setFinalText("");
     setErrorMessage(null);
@@ -297,6 +407,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const reset = useCallback(() => {
     finalsRef.current = new Map();
     committedRef.current = "";
+    interimRef.current = "";
     setFinalText("");
     setInterimText("");
     setErrorMessage(null);
@@ -309,6 +420,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     // overwriting it.
     committedRef.current = text;
     finalsRef.current = new Map();
+    interimRef.current = "";
     setFinalText(text);
     setInterimText("");
   }, []);

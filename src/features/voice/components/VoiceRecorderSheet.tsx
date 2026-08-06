@@ -50,8 +50,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
   }, [open]);
 
   const recording = sr.status === "listening";
+  const processing = sr.status === "processing";
   const hasText = sr.finalText.trim().length > 0 || sr.interimText.trim().length > 0;
-  const inReview = !recording && sr.finalText.trim().length > 0;
+  const inReview = !recording && !processing && sr.finalText.trim().length > 0;
 
   function handleUse() {
     const text = sr.finalText.trim();
@@ -103,7 +104,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
             </div>
 
             {/* Language picker — hidden in review to reduce noise */}
-            {!inReview && (
+            {!inReview && !processing && (
               <div className="mb-5 flex gap-2">
                 {LANGS.map((l) => (
                   <button
@@ -132,7 +133,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
             )}
 
             {/* Mic — hidden in review (replaced by action row) */}
-            {!inReview && (
+            {!inReview && !processing && (
               <div className="flex flex-col items-center gap-3 py-4">
                 <div className="relative flex items-center justify-center">
                   {recording && (
@@ -171,6 +172,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   {!sr.isSupported && "Voice isn't supported on this browser."}
                   {sr.isSupported && sr.status === "idle" && !hasText && "Tap the mic to start."}
                   {sr.status === "listening" && "Listening…"}
+                  {sr.status === "processing" && "Finishing your transcript…"}
                   {sr.status === "error" && (sr.errorMessage ?? "Something went wrong.")}
                 </p>
               </div>
@@ -187,8 +189,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   value={sr.finalText}
                   onChange={(e) => sr.setTranscript(e.target.value)}
                   rows={5}
-                  autoFocus
-                  className="w-full resize-y rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  autoCapitalize="sentences"
+                  spellCheck
+                  className="min-h-32 w-full resize-y rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             ) : (
@@ -257,7 +260,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
               <button
                 type="button"
                 onClick={handleUse}
-                disabled={!sr.finalText.trim()}
+                disabled={processing || !sr.finalText.trim()}
                 className="touch-target flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-primary-foreground disabled:opacity-50"
               >
                 <Check className="size-5" strokeWidth={1.75} />
