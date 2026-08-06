@@ -111,7 +111,7 @@ function normalize(input: string): string {
  */
 function cleanRecognitionStutter(input: string): string {
   const words = normalize(input).split(" ").filter(Boolean);
-  const cleaned: string[] = [];
+  const collapsedWords: string[] = [];
 
   for (let index = 0; index < words.length; index += 1) {
     const word = words[index];
@@ -129,8 +129,39 @@ function cleanRecognitionStutter(input: string): string {
 
     const runLength = runEnd - index;
     const keepCount = runLength === 2 && NATURAL_DOUBLE_WORDS.has(comparable) ? 2 : 1;
-    cleaned.push(...words.slice(index, index + keepCount));
+    collapsedWords.push(...words.slice(index, index + keepCount));
     index = runEnd - 1;
+  }
+
+  const comparable = (word: string) =>
+    word.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const cleaned: string[] = [];
+  for (let index = 0; index < collapsedWords.length; ) {
+    let repeatedPhraseLength = 0;
+    const maxPhraseLength = Math.min(8, Math.floor((collapsedWords.length - index) / 2));
+    for (let length = maxPhraseLength; length >= 2; length -= 1) {
+      const first = collapsedWords
+        .slice(index, index + length)
+        .map(comparable)
+        .join(" ");
+      const second = collapsedWords
+        .slice(index + length, index + length * 2)
+        .map(comparable)
+        .join(" ");
+      if (first && first === second) {
+        repeatedPhraseLength = length;
+        break;
+      }
+    }
+
+    if (repeatedPhraseLength > 0) {
+      cleaned.push(...collapsedWords.slice(index, index + repeatedPhraseLength));
+      index += repeatedPhraseLength * 2;
+    } else {
+      const word = collapsedWords[index];
+      if (word) cleaned.push(word);
+      index += 1;
+    }
   }
 
   return cleaned.join(" ");
