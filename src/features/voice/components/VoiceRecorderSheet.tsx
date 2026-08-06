@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Square, X, Check, RotateCcw, Plus, Trash2 } from "lucide-react";
 
-import { useSpeechRecognition } from "@/features/voice/useSpeechRecognition";
+import { useAudioTranscription } from "@/features/voice/useAudioTranscription";
 
 export type VoiceLocale = "en-IN" | "ml-IN" | "hi-IN";
 
@@ -34,7 +34,7 @@ interface Props {
 
 export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
   const [locale, setLocale] = useState<VoiceLocale>("en-IN");
-  const sr = useSpeechRecognition();
+  const sr = useAudioTranscription();
 
   // Reset state whenever the sheet is opened.
   useEffect(() => {
@@ -50,8 +50,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
   }, [open]);
 
   const recording = sr.status === "listening";
+  const processing = sr.status === "processing";
   const hasText = sr.finalText.trim().length > 0 || sr.interimText.trim().length > 0;
-  const inReview = !recording && sr.finalText.trim().length > 0;
+  const inReview = !recording && !processing && sr.finalText.trim().length > 0;
 
   function handleUse() {
     const text = sr.finalText.trim();
@@ -103,7 +104,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
             </div>
 
             {/* Language picker — hidden in review to reduce noise */}
-            {!inReview && (
+            {!inReview && !processing && (
               <div className="mb-5 flex gap-2">
                 {LANGS.map((l) => (
                   <button
@@ -122,27 +123,40 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     ].join(" ")}
                   >
                     <div className="text-sm font-semibold">{l.label}</div>
-                    <div className={[
-                      "text-[11px]",
-                      locale === l.code ? "text-primary-foreground/80" : "text-muted-foreground",
-                    ].join(" ")}>{l.sub}</div>
+                    <div
+                      className={[
+                        "text-[11px]",
+                        locale === l.code ? "text-primary-foreground/80" : "text-muted-foreground",
+                      ].join(" ")}
+                    >
+                      {l.sub}
+                    </div>
                   </button>
                 ))}
               </div>
             )}
 
             {/* Mic — hidden in review (replaced by action row) */}
-            {!inReview && (
+            {!inReview && !processing && (
               <div className="flex flex-col items-center gap-3 py-4">
                 <div className="relative flex items-center justify-center">
                   {recording && (
                     <>
-                      <span aria-hidden className="absolute inset-0 rounded-full bg-primary/25 animate-ping" />
-                      <span aria-hidden className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse" />
+                      <span
+                        aria-hidden
+                        className="absolute inset-0 rounded-full bg-primary/25 animate-ping"
+                      />
+                      <span
+                        aria-hidden
+                        className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse"
+                      />
                     </>
                   )}
                   {!recording && sr.isSupported && (
-                    <span aria-hidden className="absolute inset-0 rounded-full bg-primary/15 animate-breathe" />
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 rounded-full bg-primary/15 animate-breathe"
+                    />
                   )}
                   <motion.button
                     type="button"
@@ -155,15 +169,20 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     aria-label={recording ? "Stop recording" : "Start recording"}
                     className={[
                       "relative flex items-center justify-center rounded-full shadow-lifted transition-colors",
-                      recording ? "bg-destructive text-destructive-foreground"
-                                : "bg-primary text-primary-foreground",
+                      recording
+                        ? "bg-destructive text-destructive-foreground"
+                        : "bg-primary text-primary-foreground",
                       !sr.isSupported && "opacity-60",
-                    ].filter(Boolean).join(" ")}
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     style={{ width: 128, height: 128 }}
                   >
-                    {recording
-                      ? <Square className="size-12" strokeWidth={1.5} />
-                      : <Mic className="size-12" strokeWidth={1.5} />}
+                    {recording ? (
+                      <Square className="size-12" strokeWidth={1.5} />
+                    ) : (
+                      <Mic className="size-12" strokeWidth={1.5} />
+                    )}
                   </motion.button>
                 </div>
 
@@ -171,6 +190,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   {!sr.isSupported && "Voice isn't supported on this browser."}
                   {sr.isSupported && sr.status === "idle" && !hasText && "Tap the mic to start."}
                   {sr.status === "listening" && "Listening…"}
+                  {sr.status === "processing" && "Finishing your transcript…"}
                   {sr.status === "error" && (sr.errorMessage ?? "Something went wrong.")}
                 </p>
               </div>
@@ -179,7 +199,10 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
             {/* Transcript area — live while recording, editable in review */}
             {inReview ? (
               <div className="flex flex-col gap-2">
-                <label className="text-xs uppercase tracking-wide text-muted-foreground" htmlFor="voice-edit">
+                <label
+                  className="text-xs uppercase tracking-wide text-muted-foreground"
+                  htmlFor="voice-edit"
+                >
                   Transcript — edit anything that's off
                 </label>
                 <textarea
@@ -187,8 +210,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   value={sr.finalText}
                   onChange={(e) => sr.setTranscript(e.target.value)}
                   rows={5}
-                  autoFocus
-                  className="w-full resize-y rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  autoCapitalize="sentences"
+                  spellCheck
+                  className="min-h-32 w-full resize-y rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             ) : (
@@ -196,12 +220,15 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 aria-live="polite"
                 className="min-h-[96px] rounded-2xl bg-surface p-4 text-base leading-relaxed text-foreground"
               >
-                {hasText ? (
+                {processing ? (
+                  <span className="text-muted-foreground">Creating an accurate transcript…</span>
+                ) : hasText ? (
                   <>
                     <span>{sr.finalText}</span>
                     {sr.interimText && (
                       <span className="text-muted-foreground">
-                        {sr.finalText ? " " : ""}{sr.interimText}
+                        {sr.finalText ? " " : ""}
+                        {sr.interimText}
                       </span>
                     )}
                   </>
@@ -228,7 +255,10 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { sr.reset(); sr.start(locale); }}
+                  onClick={() => {
+                    sr.reset();
+                    sr.start(locale);
+                  }}
                   className="touch-target inline-flex items-center justify-center gap-1.5 rounded-2xl bg-surface px-3 py-2 text-sm text-foreground"
                 >
                   <RotateCcw className="size-4" strokeWidth={1.75} />
@@ -257,7 +287,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
               <button
                 type="button"
                 onClick={handleUse}
-                disabled={!sr.finalText.trim()}
+                disabled={processing || !sr.finalText.trim()}
                 className="touch-target flex-[2] inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-primary-foreground disabled:opacity-50"
               >
                 <Check className="size-5" strokeWidth={1.75} />
