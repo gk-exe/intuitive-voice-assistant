@@ -133,8 +133,7 @@ function cleanRecognitionStutter(input: string): string {
     index = runEnd - 1;
   }
 
-  const comparable = (word: string) =>
-    word.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const comparable = (word: string) => word.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const cleaned: string[] = [];
   for (let index = 0; index < collapsedWords.length; ) {
     let repeatedPhraseLength = 0;
