@@ -100,10 +100,13 @@ function errorMessageFor(code: string): string | null {
   if (code === "not-allowed" || code === "service-not-allowed") {
     return "Microphone permission is blocked. Enable it in browser settings and try again.";
   }
-  if (code === "audio-capture") return "No microphone is available. Check your device and try again.";
-  if (code === "network") return "Speech recognition lost its connection. Check your network and try again.";
+  if (code === "audio-capture")
+    return "No microphone is available. Check your device and try again.";
+  if (code === "network")
+    return "Speech recognition lost its connection. Check your network and try again.";
   return "Speech recognition stopped unexpectedly. Please try again.";
 }
+
 
 export function useSpeechRecognition(): UseSpeechRecognition {
   const isSupported = getConstructor() !== null;

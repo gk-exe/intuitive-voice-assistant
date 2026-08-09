@@ -113,7 +113,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     key={l.code}
                     type="button"
                     onClick={() => {
-                       if (active) sr.stop();
+                      if (active) sr.stop();
                       setLocale(l.code);
                     }}
                     aria-pressed={locale === l.code}
@@ -180,7 +180,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                       .join(" ")}
                     style={{ width: 128, height: 128 }}
                   >
-                     {active ? (
+                    {active ? (
                       <Square className="size-12" strokeWidth={1.5} />
                     ) : (
                       <Mic className="size-12" strokeWidth={1.5} />
