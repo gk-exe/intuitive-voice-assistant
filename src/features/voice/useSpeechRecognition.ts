@@ -107,7 +107,6 @@ function errorMessageFor(code: string): string | null {
   return "Speech recognition stopped unexpectedly. Please try again.";
 }
 
-
 export function useSpeechRecognition(): UseSpeechRecognition {
   const isSupported = getConstructor() !== null;
   const [status, setStatus] = useState<RecognitionStatus>(isSupported ? "idle" : "unsupported");
