@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Square, X, Check, RotateCcw, Plus, Trash2 } from "lucide-react";
 
-import { useAudioTranscription } from "@/features/voice/useAudioTranscription";
+import { useSpeechRecognition } from "@/features/voice/useSpeechRecognition";
 
 export type VoiceLocale = "en-IN" | "ml-IN" | "hi-IN";
 
@@ -34,7 +34,7 @@ interface Props {
 
 export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
   const [locale, setLocale] = useState<VoiceLocale>("en-IN");
-  const sr = useAudioTranscription();
+  const sr = useSpeechRecognition();
 
   // Reset state whenever the sheet is opened.
   useEffect(() => {
@@ -49,8 +49,10 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const starting = sr.status === "starting";
   const recording = sr.status === "listening";
-  const processing = sr.status === "processing";
+  const processing = sr.status === "stopping" || sr.status === "processing";
+  const active = starting || recording;
   const hasText = sr.finalText.trim().length > 0 || sr.interimText.trim().length > 0;
   const inReview = !recording && !processing && sr.finalText.trim().length > 0;
 
@@ -111,7 +113,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                     key={l.code}
                     type="button"
                     onClick={() => {
-                      if (recording) sr.stop();
+                       if (active) sr.stop();
                       setLocale(l.code);
                     }}
                     aria-pressed={locale === l.code}
@@ -161,12 +163,12 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.94 }}
-                    disabled={!sr.isSupported}
+                    disabled={!sr.isSupported || starting}
                     onClick={() => {
-                      if (recording) sr.stop();
+                      if (active) sr.stop();
                       else sr.start(locale);
                     }}
-                    aria-label={recording ? "Stop recording" : "Start recording"}
+                    aria-label={active ? "Stop recording" : "Start recording"}
                     className={[
                       "relative flex items-center justify-center rounded-full shadow-lifted transition-colors",
                       recording
@@ -178,7 +180,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                       .join(" ")}
                     style={{ width: 128, height: 128 }}
                   >
-                    {recording ? (
+                     {active ? (
                       <Square className="size-12" strokeWidth={1.5} />
                     ) : (
                       <Mic className="size-12" strokeWidth={1.5} />
@@ -189,7 +191,9 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                 <p className="min-h-5 text-sm text-muted-foreground">
                   {!sr.isSupported && "Voice isn't supported on this browser."}
                   {sr.isSupported && sr.status === "idle" && !hasText && "Tap the mic to start."}
+                  {sr.status === "starting" && "Starting microphone…"}
                   {sr.status === "listening" && "Listening…"}
+                  {sr.status === "stopping" && "Finishing your transcript…"}
                   {sr.status === "processing" && "Finishing your transcript…"}
                   {sr.status === "error" && (sr.errorMessage ?? "Something went wrong.")}
                 </p>
