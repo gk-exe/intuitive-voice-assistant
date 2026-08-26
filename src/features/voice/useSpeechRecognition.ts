@@ -27,6 +27,7 @@ interface SREventLike {
 
 const MAX_RECORDING_MS = 90_000;
 const START_TIMEOUT_MS = 10_000;
+const NATURAL_DOUBLE_WORDS = new Set(["bye", "had", "is", "no", "that", "very", "yes"]);
 
 function getConstructor(): SRConstructor | null {
   if (typeof window === "undefined") return null;
@@ -83,7 +84,8 @@ function cleanObviousStutter(text: string): string {
     let end = index + 1;
     while (end < words.length && key && comparable(words[end] ?? "") === key) end += 1;
     const runLength = end - index;
-    output.push(...words.slice(index, runLength >= 3 ? index + 1 : end));
+    const keepCount = runLength === 2 && NATURAL_DOUBLE_WORDS.has(key) ? 2 : 1;
+    output.push(...words.slice(index, index + keepCount));
     index = end;
   }
 
