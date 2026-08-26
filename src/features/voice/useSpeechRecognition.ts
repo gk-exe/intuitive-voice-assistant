@@ -26,7 +26,8 @@ interface SREventLike {
 }
 
 const MAX_RECORDING_MS = 90_000;
-const STOP_GRACE_MS = 2_500;
+const START_TIMEOUT_MS = 10_000;
+const NATURAL_DOUBLE_WORDS = new Set(["bye", "had", "is", "no", "that", "very", "yes"]);
 
 function getConstructor(): SRConstructor | null {
   if (typeof window === "undefined") return null;
@@ -66,7 +67,7 @@ function normalize(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-/** Only collapse unmistakable recognizer stutter (three or more identical words). */
+/** Only collapse unmistakable recognizer stutter within one recognition result. */
 function cleanObviousStutter(text: string): string {
   const words = normalize(text).split(" ").filter(Boolean);
   const comparable = (word: string) =>
@@ -83,8 +84,37 @@ function cleanObviousStutter(text: string): string {
     let end = index + 1;
     while (end < words.length && key && comparable(words[end] ?? "") === key) end += 1;
     const runLength = end - index;
-    output.push(...words.slice(index, runLength >= 3 ? index + 1 : end));
+    const keepCount = runLength === 2 && NATURAL_DOUBLE_WORDS.has(key) ? 2 : 1;
+    output.push(...words.slice(index, index + keepCount));
     index = end;
+  }
+
+  return output.join(" ");
+}
+
+/**
+ * Join recognition results without repeating an overlap between adjacent
+ * browser segments. Repetition inside one segment is left intact so natural
+ * speech such as "no no, wait" is preserved.
+ */
+function joinSegments(parts: string[]): string {
+  const comparable = (word: string) =>
+    word.toLocaleLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  const output: string[] = [];
+
+  for (const part of parts) {
+    const words = normalize(part).split(" ").filter(Boolean);
+    let overlap = 0;
+    const maxOverlap = Math.min(output.length, words.length);
+    for (let size = maxOverlap; size > 0; size -= 1) {
+      const existing = output.slice(-size).map(comparable).join(" ");
+      const incoming = words.slice(0, size).map(comparable).join(" ");
+      if (existing && existing === incoming) {
+        overlap = size;
+        break;
+      }
+    }
+    output.push(...words.slice(overlap));
   }
 
   return output.join(" ");
@@ -118,6 +148,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const sessionRef = useRef(0);
   const finalizedRef = useRef(false);
   const cancelledRef = useRef(false);
+  const acceptingResultsRef = useRef(false);
   const committedRef = useRef("");
   const finalSegmentsRef = useRef<Map<number, string>>(new Map());
   const interimSegmentsRef = useRef<Map<number, string>>(new Map());
@@ -147,12 +178,12 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     const finals = Array.from(finalSegmentsRef.current.entries())
       .sort(([left], [right]) => left - right)
       .map(([, text]) => text);
-    return cleanObviousStutter(joinParts(committedRef.current, ...finals));
+    return cleanObviousStutter(joinSegments([committedRef.current, ...finals]));
   }, []);
 
   const assembleInterim = useCallback(() => {
-    return joinParts(
-      ...Array.from(interimSegmentsRef.current.entries())
+    return joinSegments(
+      Array.from(interimSegmentsRef.current.entries())
         .sort(([left], [right]) => left - right)
         .map(([, text]) => text),
     );
@@ -162,6 +193,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     (recognition: SpeechRecognitionLike, sessionId: number, failure?: string) => {
       if (sessionRef.current !== sessionId || finalizedRef.current) return;
       finalizedRef.current = true;
+      acceptingResultsRef.current = false;
 
       const final = assembleFinal();
       const interim = assembleInterim();
@@ -180,7 +212,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         return;
       }
       const failureMessage = failure ? errorMessageFor(failure) : null;
-      if (failureMessage) {
+      if (failureMessage && !completed) {
         setErrorMessage(failureMessage);
         setStatus("error");
       } else if (!completed) {
@@ -206,24 +238,16 @@ export function useSpeechRecognition(): UseSpeechRecognition {
     }
     const sessionId = sessionRef.current;
     setStatus("stopping");
-    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
-    recordingTimerRef.current = null;
+    acceptingResultsRef.current = false;
     try {
       recognition.stop();
     } catch {
-      finishSession(recognition, sessionId);
-      return;
+      // Finalize the transcript already received even when stop() itself fails.
     }
-    if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
-    stopTimerRef.current = setTimeout(() => {
-      if (recognitionRef.current !== recognition) return;
-      try {
-        recognition.abort();
-      } catch {
-        // Finalization below still restores a usable state.
-      }
-      finishSession(recognition, sessionId);
-    }, STOP_GRACE_MS);
+    // Do not rely on onend: some implementations never dispatch it after a
+    // permission interruption or an immediate stop. Preserve the latest
+    // interim snapshot once, detach listeners, and leave recording now.
+    finishSession(recognition, sessionId);
   }, [finishSession]);
 
   const beginSession = useCallback(
@@ -240,6 +264,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
       sessionRef.current = sessionId;
       finalizedRef.current = false;
       cancelledRef.current = false;
+      acceptingResultsRef.current = true;
       clearTimers();
       setErrorMessage(null);
       setInterimText("");
@@ -258,25 +283,33 @@ export function useSpeechRecognition(): UseSpeechRecognition {
       recognition.onstart = () => {
         if (sessionRef.current !== sessionId || recognitionRef.current !== recognition) return;
         setStatus("listening");
+        clearTimers();
         recordingTimerRef.current = setTimeout(stopActive, MAX_RECORDING_MS);
       };
 
       recognition.onresult = (event) => {
-        if (sessionRef.current !== sessionId || recognitionRef.current !== recognition) return;
-        // Only changed indexes are processed. Each final is stored by index,
-        // so a browser revision replaces that segment instead of appending it.
-        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        if (
+          !acceptingResultsRef.current ||
+          sessionRef.current !== sessionId ||
+          recognitionRef.current !== recognition
+        )
+          return;
+        // Rebuild from the recognizer's absolute result list. This is
+        // idempotent when Chrome revises or re-emits an existing result.
+        const nextFinals = new Map<number, string>();
+        const nextInterims = new Map<number, string>();
+        for (let index = 0; index < event.results.length; index += 1) {
           const result = event.results[index];
           if (!result) continue;
           const transcript = normalize(result[0]?.transcript ?? "");
           if (result.isFinal) {
-            interimSegmentsRef.current.delete(index);
-            if (transcript) finalSegmentsRef.current.set(index, transcript);
+            if (transcript) nextFinals.set(index, transcript);
           } else {
-            if (transcript) interimSegmentsRef.current.set(index, transcript);
-            else interimSegmentsRef.current.delete(index);
+            if (transcript) nextInterims.set(index, transcript);
           }
         }
+        finalSegmentsRef.current = nextFinals;
+        interimSegmentsRef.current = nextInterims;
         const nextFinal = assembleFinal();
         const nextInterim = assembleInterim();
         setFinalText(nextFinal);
@@ -294,6 +327,15 @@ export function useSpeechRecognition(): UseSpeechRecognition {
       };
 
       setStatus("starting");
+      recordingTimerRef.current = setTimeout(() => {
+        if (sessionRef.current !== sessionId || recognitionRef.current !== recognition) return;
+        finishSession(recognition, sessionId, "start-timeout");
+        try {
+          recognition.abort();
+        } catch {
+          // The session has already returned to a usable error state.
+        }
+      }, START_TIMEOUT_MS);
       try {
         recognition.start();
       } catch {
@@ -305,6 +347,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
 
   const cancel = useCallback(() => {
     cancelledRef.current = true;
+    acceptingResultsRef.current = false;
     sessionRef.current += 1;
     const recognition = recognitionRef.current;
     if (recognition) {

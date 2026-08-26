@@ -163,7 +163,7 @@ export function VoiceRecorderSheet({ open, onClose, onTranscript }: Props) {
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.94 }}
-                    disabled={!sr.isSupported || starting}
+                    disabled={!sr.isSupported}
                     onClick={() => {
                       if (active) sr.stop();
                       else sr.start(locale);
