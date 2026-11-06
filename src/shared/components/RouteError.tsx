@@ -7,13 +7,13 @@
  * clear next step.
  */
 
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "./Screen";
 import { TouchButton } from "./TouchButton";
 
-export function RouteError({ error, reset }: { error: Error; reset: () => void }) {
+export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   const { t } = useTranslation();
 
